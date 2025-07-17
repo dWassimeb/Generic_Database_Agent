@@ -1,0 +1,41 @@
+[project]
+name = "generic-database-agent"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = "!=3.9.7,>=3.9,<4.0"
+dependencies = [
+    "clickhouse-driver (>=0.2.6)",
+    "clickhouse-connect (>=0.6.23)",
+    "langchain (>=0.1.0)",
+    "langchain-core (>=0.1.0)",
+    "langgraph (>=0.0.26)",
+    "pydantic (>=2.5.0)",
+    "python-dotenv (>=1.0.0)",
+    "pandas (>=2.1.0)",
+    "streamlit (>=1.29.0)",
+    "plotly (>=5.17.0)",
+    "numpy (>=1.24.0)",
+    "typing-extensions (>=4.8.0)",
+    "requests (>=2.31.0)",
+    "streamlit-elements (>=0.1.0)",
+    "faker (>=18.13.0)",
+    "rich (>=13.4.2)",
+    "click (>=8.1.3)"
+]
+
+[tool.poetry]
+packages = [
+    { include = "src" }
+]
+[tool.poetry.scripts]
+generate-data = "scripts.generate_data:main"
+init-db = "scripts.init_db:main"
+demo = "scripts.demo:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
