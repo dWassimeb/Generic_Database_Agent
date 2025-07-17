@@ -51,12 +51,12 @@ DB_NAME="france_services_db"
 DB_USER="fs_user"
 DB_PASSWORD="fs_password"
 
-# Vérifier si la base de données existe déjà
-if psql -U $CURRENT_USER -lqt | cut -d \| -f 1 | grep -qw $DB_NAME; then
+# Vérifier si la base de données existe déjà (en se connectant à la base postgres qui existe toujours)
+if psql -U $CURRENT_USER postgres -lqt | cut -d \| -f 1 | grep -qw $DB_NAME; then
     echo -e "${YELLOW}La base de données $DB_NAME existe déjà.${NC}"
 else
-    # Créer la base de données
-    psql -U $CURRENT_USER -c "CREATE DATABASE $DB_NAME;"
+    # Créer la base de données (en se connectant à la base postgres qui existe toujours)
+    psql -U $CURRENT_USER postgres -c "CREATE DATABASE $DB_NAME;"
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Base de données $DB_NAME créée avec succès.${NC}"
     else
@@ -65,12 +65,12 @@ else
     fi
 fi
 
-# Vérifier si l'utilisateur existe déjà
-if psql -U $CURRENT_USER -c "\du" | grep -qw $DB_USER; then
+# Vérifier si l'utilisateur existe déjà (en se connectant à la base postgres qui existe toujours)
+if psql -U $CURRENT_USER postgres -c "\du" | grep -qw $DB_USER; then
     echo -e "${YELLOW}L'utilisateur $DB_USER existe déjà.${NC}"
 else
-    # Créer l'utilisateur
-    psql -U $CURRENT_USER -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+    # Créer l'utilisateur (en se connectant à la base postgres qui existe toujours)
+    psql -U $CURRENT_USER postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Utilisateur $DB_USER créé avec succès.${NC}"
     else
@@ -79,8 +79,8 @@ else
     fi
 fi
 
-# Accorder les privilèges
-psql -U $CURRENT_USER -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+# Accorder les privilèges (en se connectant à la base postgres qui existe toujours)
+psql -U $CURRENT_USER postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Privilèges accordés à $DB_USER sur $DB_NAME.${NC}"
 else

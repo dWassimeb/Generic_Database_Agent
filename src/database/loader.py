@@ -1,19 +1,36 @@
 # src/database/loader.py
 import pandas as pd
-import psycopg2
-from sqlalchemy import text
+import sys
 from pathlib import Path
 from rich.console import Console
 from rich.progress import Progress
 
-from .connection import DatabaseConnection
+# Try to import psycopg2, but handle the case where it's not installed
+try:
+    import psycopg2
+    from sqlalchemy import text
+    from .connection import DatabaseConnection
+    PSYCOPG2_AVAILABLE = True
+except ImportError:
+    PSYCOPG2_AVAILABLE = False
 
 
 class DatabaseLoader:
     def __init__(self):
+        self.console = Console()
+        
+        if not PSYCOPG2_AVAILABLE:
+            self.console.print("[bold red]Error:[/bold red] psycopg2 module not found.")
+            self.console.print("This script requires PostgreSQL and the psycopg2 package to run.")
+            self.console.print("\nTo install psycopg2, you need:")
+            self.console.print("1. PostgreSQL installed on your system")
+            self.console.print("2. PostgreSQL development libraries")
+            self.console.print("3. Run: [bold]pip install psycopg2-binary[/bold] or [bold]poetry add psycopg2-binary[/bold]")
+            self.console.print("\nFor more information, visit: https://www.psycopg.org/docs/install.html")
+            return
+            
         self.db_connection = DatabaseConnection()
         self.engine = self.db_connection.get_engine()
-        self.console = Console()
 
     def create_tables(self):
         """Créer les tables PostgreSQL"""
@@ -137,6 +154,16 @@ class DatabaseLoader:
 
     def initialize_database(self):
         """Initialiser complètement la base de données"""
+        if not PSYCOPG2_AVAILABLE:
+            self.console.print("[bold red]Error:[/bold red] Cannot initialize database.")
+            self.console.print("This script requires PostgreSQL and the psycopg2 package to run.")
+            self.console.print("\nTo install psycopg2, you need:")
+            self.console.print("1. PostgreSQL installed on your system")
+            self.console.print("2. PostgreSQL development libraries")
+            self.console.print("3. Run: [bold]pip install psycopg2-binary[/bold] or [bold]poetry add psycopg2-binary[/bold]")
+            self.console.print("\nFor more information, visit: https://www.psycopg.org/docs/install.html")
+            sys.exit(1)
+            
         self.console.print("🚀 Initialisation de la base de données...")
         self.create_tables()
         self.load_csv_data()
