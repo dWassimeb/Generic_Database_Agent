@@ -1,5 +1,5 @@
 """
-LangGraph State Definition - Central state management for the ClickHouse Agent
+LangGraph State Definition - Central state management for the Generic SQL Agent
 """
 
 from typing import Dict, Any, List, Literal, TypedDict, Union
@@ -7,9 +7,9 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langgraph.graph.message import add_messages
 from typing_extensions import Annotated
 
-class ClickHouseAgentState(TypedDict):
+class GenericSQLAgentState(TypedDict):
     """
-    Central state for the ClickHouse LangGraph Agent workflow.
+    Central state for the Generic SQL LangGraph Agent workflow.
 
     This state is passed between all nodes in the graph and contains
     all the information needed for the agent to make decisions and
@@ -40,3 +40,6 @@ class ClickHouseAgentState(TypedDict):
     # Error handling
     error_occurred: bool
     error_message: str
+
+# Backward compatibility alias
+ClickHouseAgentState = GenericSQLAgentState

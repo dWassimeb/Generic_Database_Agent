@@ -14,7 +14,7 @@ class AuthManager:
     """Manages user authentication and account settings with separate username and email."""
 
     def __init__(self):
-        self.users_file = "data/users.json"
+        self.users_file = "users_data/users.json"
         self._ensure_data_directory()
         self._load_users()
 

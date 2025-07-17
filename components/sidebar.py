@@ -19,7 +19,7 @@ class SidebarManager:
 
     def __init__(self):
         self.auth_manager = AuthManager()
-        self.sessions_file = "data/chat_sessions.json"
+        self.sessions_file = "users_data/chat_sessions.json"
         self._ensure_data_directory()
         # FIXED: Cache conversations to avoid repeated file reads
         self._conversations_cache = None

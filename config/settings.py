@@ -1,27 +1,47 @@
 """
-Configuration settings for the ClickHouse Agent.
+Configuration settings for the Generic SQL Agent.
 """
 
 from pydantic import BaseModel
 from typing import Optional
 
-class ClickHouseConfig(BaseModel):
-    host: str = "172.20.157.162"
-    port: int = 8123
-    database: str = "default"
-    username: str = "default"
-    password: Optional[str] = "default123!"  # Empty string instead of None
+class DatabaseConfig(BaseModel):
+    """Generic database configuration."""
+    db_type: str = "sqlite"
+    db_path: str = "user_data/database.db"
+    csv_directory: str = "database/csv_files"
+    auto_import_csv: bool = True
+    backup_enabled: bool = True
+    backup_directory: str = "user_data/backups"
 
     @property
     def connection_params(self) -> dict:
-        """For backward compatibility, though we're using clickhouse-connect now."""
+        """Get connection parameters."""
         return {
-            "host": self.host,
-            "port": self.port,
-            "database": self.database,
-            "username": self.username,
-            "password": self.password or ""
+            "db_type": self.db_type,
+            "db_path": self.db_path,
+            "csv_directory": self.csv_directory,
+            "auto_import_csv": self.auto_import_csv
         }
 
-# Global configuration instance
-CLICKHOUSE_CONFIG = ClickHouseConfig()
+class AgentConfig(BaseModel):
+    """Agent configuration settings."""
+    verbose: bool = True
+    max_query_results: int = 1000
+    enable_visualization: bool = True
+    enable_csv_export: bool = True
+    query_timeout: int = 30  # seconds
+
+class AppConfig(BaseModel):
+    """Application configuration."""
+    app_name: str = "Generic SQL Agent"
+    version: str = "1.0.0"
+    debug_mode: bool = False
+    export_directory: str = "exports"
+    visualization_directory: str = "visualizations"
+    log_level: str = "INFO"
+
+# Global configuration instances
+DATABASE_CONFIG = DatabaseConfig()
+AGENT_CONFIG = AgentConfig()
+APP_CONFIG = AppConfig()

@@ -1,21 +1,21 @@
 """
-Query execution tool with embedded helper functions.
+Query execution tool with generic SQL database support.
 """
 
 from typing import Dict, Any, List
 from langchain.tools import BaseTool
 import re
 import logging
-from database.connection import clickhouse_connection
+from database.connection import generic_db_connection
 
 logger = logging.getLogger(__name__)
 
 class QueryExecutionTool(BaseTool):
-    """Tool for executing SQL queries safely on ClickHouse."""
+    """Tool for executing SQL queries safely on generic SQL database."""
 
     name: str = "execute_query"
     description: str = """
-    Execute SQL queries on ClickHouse database safely.
+    Execute SQL queries on generic SQL database safely.
     Validates queries, adds safety limits, and returns structured results.
     """
 
@@ -34,7 +34,7 @@ class QueryExecutionTool(BaseTool):
             safe_query = self._add_safety_limits(sql_query)
 
             # Execute the query
-            result = clickhouse_connection.execute_query_with_names(safe_query)
+            result = generic_db_connection.execute_query_with_names(safe_query)
 
             # Process results
             processed_result = self._process_results(result)
@@ -48,7 +48,7 @@ class QueryExecutionTool(BaseTool):
 
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
-            error_info = self._parse_clickhouse_error(str(e))
+            error_info = self._parse_sql_error(str(e))
             return {
                 'success': False,
                 'error': error_info['user_message'],
@@ -66,7 +66,7 @@ class QueryExecutionTool(BaseTool):
         # Check for dangerous operations
         dangerous_keywords = [
             'DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE',
-            'TRUNCATE', 'REPLACE', 'EXEC', 'EXECUTE', 'SYSTEM'
+            'TRUNCATE', 'REPLACE', 'EXEC', 'EXECUTE', 'PRAGMA'
         ]
 
         for keyword in dangerous_keywords:
@@ -105,34 +105,33 @@ class QueryExecutionTool(BaseTool):
             formatted_row = {}
             for i, col in enumerate(raw_result['columns']):
                 value = row[i] if i < len(row) else None
-                formatted_row[col] = self._format_value(value, raw_result['types'][i])
+                formatted_row[col] = self._format_value(value)
             formatted_data.append(formatted_row)
 
         return {
             'columns': raw_result['columns'],
             'data': raw_result['data'],
             'formatted_data': formatted_data,
-            'types': raw_result['types'],
+            'types': raw_result.get('types', ['TEXT'] * len(raw_result['columns'])),
             'row_count': len(raw_result['data']),
             'summary': f"Found {len(raw_result['data'])} rows with {len(raw_result['columns'])} columns"
         }
 
-    def _format_value(self, value: Any, data_type: str) -> Any:
+    def _format_value(self, value: Any) -> Any:
         """Format individual values based on their type."""
         if value is None:
             return None
 
-        if 'Int' in data_type or 'UInt' in data_type:
-            return int(value)
-        elif 'Float' in data_type or 'Decimal' in data_type:
-            return float(value)
-        elif 'DateTime' in data_type:
-            return str(value)
-        else:
+        # Handle different data types
+        if isinstance(value, (int, float)):
             return value
+        elif isinstance(value, str):
+            return value.strip()
+        else:
+            return str(value)
 
-    def _parse_clickhouse_error(self, error_msg: str) -> Dict[str, str]:
-        """Parse ClickHouse error messages for user-friendly explanations."""
+    def _parse_sql_error(self, error_msg: str) -> Dict[str, str]:
+        """Parse SQL error messages for user-friendly explanations."""
         error_info = {
             'type': 'unknown',
             'user_message': error_msg,
@@ -141,24 +140,24 @@ class QueryExecutionTool(BaseTool):
 
         error_lower = error_msg.lower()
 
-        if "table doesn't exist" in error_lower or 'unknown table' in error_lower:
+        if "no such table" in error_lower:
             error_info['type'] = 'table_not_found'
             error_info['user_message'] = "The specified table was not found"
             error_info['suggestion'] = "Use 'list tables' to see available tables"
 
-        elif 'no such column' in error_lower or 'unknown identifier' in error_lower:
+        elif 'no such column' in error_lower or 'no column named' in error_lower:
             error_info['type'] = 'column_not_found'
             error_info['user_message'] = "One or more columns don't exist"
-            error_info['suggestion'] = "Check column names using 'schema TABLE_NAME'"
+            error_info['suggestion'] = "Check column names in the table schema"
 
         elif 'syntax error' in error_lower:
             error_info['type'] = 'syntax_error'
             error_info['user_message'] = "SQL syntax error"
-            error_info['suggestion'] = "Try rephrasing your question"
+            error_info['suggestion'] = "Check your SQL syntax"
 
-        elif 'timeout' in error_lower:
-            error_info['type'] = 'timeout'
-            error_info['user_message'] = "Query took too long to execute"
-            error_info['suggestion'] = "Add more specific filters or reduce date range"
+        elif 'locked' in error_lower:
+            error_info['type'] = 'database_locked'
+            error_info['user_message'] = "Database is temporarily locked"
+            error_info['suggestion'] = "Please try again in a moment"
 
         return error_info

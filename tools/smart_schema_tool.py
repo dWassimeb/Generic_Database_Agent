@@ -8,13 +8,13 @@ from pydantic import Field
 import json
 import logging
 from llm.custom_gpt import CustomGPT
-from database.connection import clickhouse_connection
+from database.connection import generic_db_connection
 from config.schemas import TABLE_SCHEMAS
 
 logger = logging.getLogger(__name__)
 
 class SmartSchemaTool(BaseTool):
-    """Simplified LLM-powered schema tool that adapts to user input and suggests corrections."""
+    """LLM-powered schema tool that adapts to user input and suggests corrections."""
 
     name: str = "smart_schema"
     description: str = "Handle schema questions with intelligent table name matching and suggestions."
@@ -75,7 +75,7 @@ Respond with JSON:
     "reasoning": "Why you chose this interpretation"
 }}
 
-Important: For table names, be flexible - 'customer' should match 'CUSTOMER', 'rm_data' should match 'RM_AGGREGATED_DATA', etc.
+Important: For table names, be flexible - 'customer' should match 'customers', 'order' should match 'orders', etc.
 
 JSON Response:"""
 
@@ -125,13 +125,13 @@ JSON Response:"""
         if table_name in TABLE_SCHEMAS:
             schema = TABLE_SCHEMAS[table_name]
 
-            # Try to enhance with ClickHouse data if possible
+            # Try to enhance with database data if possible
             try:
-                clickhouse_data = self._get_clickhouse_table_info(table_name)
-                if clickhouse_data:
-                    schema['clickhouse_info'] = clickhouse_data
+                db_data = self._get_database_table_info(table_name)
+                if db_data:
+                    schema['database_info'] = db_data
             except Exception as e:
-                logger.warning(f"ClickHouse enhancement failed: {e}")
+                logger.warning(f"Database enhancement failed: {e}")
 
             return {
                 'operation': 'describe_table',
@@ -176,13 +176,13 @@ JSON Response:"""
                 'column_count': len(schema.get('columns', {}))
             }
 
-            # Try to add ClickHouse info if possible
+            # Try to add database info if possible
             try:
-                clickhouse_info = self._get_clickhouse_table_info(table_name)
-                if clickhouse_info:
-                    tables_info[table_name].update(clickhouse_info)
+                db_info = self._get_database_table_info(table_name)
+                if db_info:
+                    tables_info[table_name].update(db_info)
             except:
-                pass  # Ignore ClickHouse errors for table listing
+                pass  # Ignore database errors for table listing
 
         return {
             'operation': 'list_tables',
@@ -190,29 +190,26 @@ JSON Response:"""
             'total_tables': len(tables_info)
         }
 
-    def _get_clickhouse_table_info(self, table_name: str) -> Dict[str, Any]:
-        """Get additional info from ClickHouse (non-critical)."""
+    def _get_database_table_info(self, table_name: str) -> Dict[str, Any]:
+        """Get additional info from database (non-critical)."""
 
         try:
-            info_query = f"""
-            SELECT total_rows, total_bytes
-            FROM system.tables 
-            WHERE database = currentDatabase() AND name = '{table_name}'
-            """
+            # Get row count
+            result = generic_db_connection.execute_query_with_names(f"SELECT COUNT(*) FROM {table_name}")
+            row_count = result['data'][0][0] if result.get('data') else 0
 
-            result = clickhouse_connection.execute_query_with_names(info_query)
+            # Get table schema from database
+            db_schema = generic_db_connection.get_table_schema(table_name)
 
-            if result.get("data") and len(result["data"]) > 0:
-                row = result["data"][0]
-                return {
-                    'total_rows': row[0] if len(row) > 0 else 0,
-                    'total_bytes': row[1] if len(row) > 1 else 0,
-                    'size_human': self._format_bytes(row[1]) if len(row) > 1 else "Unknown"
-                }
+            return {
+                'total_rows': row_count,
+                'database_columns': len(db_schema.get('columns', {})),
+                'table_exists_in_db': bool(db_schema)
+            }
+
         except Exception as e:
-            logger.debug(f"ClickHouse table info failed for {table_name}: {e}")
-
-        return None
+            logger.debug(f"Database table info failed for {table_name}: {e}")
+            return None
 
     def _format_response_with_llm(self, user_question: str, extracted_info: Dict[str, Any], schema_data: Dict[str, Any]) -> str:
         """Use LLM to create a user-friendly response."""
@@ -267,21 +264,28 @@ Response:"""
                         col_desc = col_info.get('description', 'No description')
                         response += f"- **{col_name}** ({col_type}): {col_desc}\n"
 
+                # Show database info if available
+                db_info = schema.get('database_info', {})
+                if db_info:
+                    response += f"\n**Database Info:**\n"
+                    response += f"- Total rows: {db_info.get('total_rows', 'Unknown')}\n"
+
                 return response
             else:
                 available = ', '.join(schema_data.get('available_tables', []))
                 return f"❌ **Table not found**\n\nAvailable tables: {available}"
 
+        elif schema_data.get('operation') == 'list_tables':
+            response = "## 📊 Available Tables\n\n"
+            tables = schema_data.get('tables', {})
+            for table_name, table_info in tables.items():
+                response += f"### {table_name}\n"
+                response += f"- **Description:** {table_info.get('description', 'No description')}\n"
+                response += f"- **Columns:** {table_info.get('column_count', 0)}\n"
+                if 'total_rows' in table_info:
+                    response += f"- **Rows:** {table_info['total_rows']:,}\n"
+                response += "\n"
+            return response
+
         # Default fallback
         return "**Schema Information**\n\nProcessed your request but formatting failed."
-
-    def _format_bytes(self, bytes_value: int) -> str:
-        """Format bytes in human readable format."""
-        if not bytes_value or bytes_value == 0:
-            return "0 B"
-
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if bytes_value < 1024.0:
-                return f"{bytes_value:.1f} {unit}"
-            bytes_value /= 1024.0
-        return f"{bytes_value:.1f} PB"

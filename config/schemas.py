@@ -1,193 +1,131 @@
 """
-Enhanced database schemas and metadata with better relationship mapping.
+Enhanced database schemas and metadata for the Generic SQL Agent.
+This file contains hardcoded advanced schema information.
 """
 
-# Table schemas with enhanced metadata
+from typing import Dict, Any, List
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Enhanced table schemas with detailed business context
 TABLE_SCHEMAS = {
-    "RM_AGGREGATED_DATA": {
-        "description": "Main aggregated data table containing communication session records and tickets",
-        "primary_key": "AP_ID",
-        "business_context": "Core table for telecom data analysis - contains all communication sessions with volume, duration, and technical details",
-        "common_queries": ["data usage analysis", "session duration", "device tracking", "operator statistics"],
+    "customers": {
+        "description": "Customer information and demographics",
+        "primary_key": "customer_id",
+        "business_context": "Core customer data for CRM and analytics - contains customer demographics and contact information",
+        "common_queries": ["customer analysis", "demographic breakdowns", "customer lookup", "customer counts"],
         "columns": {
-            "AP_ID": {
-                "type": "UInt32",
-                "description": "Technical identifier of the line",
-                "is_primary_key": True
+            "customer_id": {
+                "type": "INTEGER",
+                "description": "Unique identifier for each customer",
+                "is_primary_key": True,
+                "business_meaning": "Primary key for customer records"
             },
-            "PARTY_ID": {
-                "type": "UInt32",
-                "description": "Technical identifier of the client",
-                "foreign_key": "CUSTOMER.PARTY_ID",
-                "business_meaning": "Links to customer information"
+            "name": {
+                "type": "TEXT",
+                "description": "Full name of the customer",
+                "business_meaning": "Customer's complete name for identification and communication"
             },
-            "PDP_CONNECTION_ID": {
-                "type": "UInt32",
-                "description": "Technical identifier of the DATA session"
+            "email": {
+                "type": "TEXT",
+                "description": "Email address of the customer",
+                "business_meaning": "Primary contact method for customer communication",
+                "is_unique": True
             },
-            "RECORD_OPENING_TIME": {
-                "type": "DateTime('Europe/Paris')",
-                "description": "Start date of the communication ticket",
-                "is_temporal": True,
-                "common_filters": ["date ranges", "recent data", "time periods"]
-            },
-            "RECORD_CLOSING_TIME": {
-                "type": "DateTime('Europe/Paris')",
-                "description": "End date of the communication ticket",
-                "is_temporal": True
-            },
-            "UPLOAD": {
-                "type": "Int32",
-                "description": "Upload volume in bytes",
-                "unit": "bytes",
-                "aggregatable": True,
-                "business_meaning": "Data transmitted from device to network"
-            },
-            "DOWNLOAD": {
-                "type": "Int32",
-                "description": "Download volume in bytes",
-                "unit": "bytes",
-                "aggregatable": True,
-                "business_meaning": "Data received by device from network"
-            },
-            "DURATION": {
-                "type": "Int32",
-                "description": "Duration in minutes (maximum 15 minutes)",
-                "unit": "minutes",
+            "age": {
+                "type": "INTEGER",
+                "description": "Age of the customer in years",
+                "business_meaning": "Customer age for demographic analysis and segmentation",
                 "aggregatable": True
             },
-            "PLMN": {
-                "type": "LowCardinality(String)",
-                "description": "Mobile operator code",
-                "foreign_key": "PLMN.PLMN",
-                "business_meaning": "Links to operator and country information"
-            },
-            "OFFER_CODE": {
-                "type": "LowCardinality(String)",
-                "description": "Tariff offer code of the line"
-            },
-            "SEQUENCE_NUMBER": {
-                "type": "Int32",
-                "description": "Sequential number of the ticket in the DATA session"
-            },
-            "CONNECTION_STATUS": {
-                "type": "FixedString(1)",
-                "description": "P: Partial (intermediate ticket), F: Final (final ticket)",
-                "enum_values": {"P": "Partial", "F": "Final"}
-            },
-            "IP_V4_ADDRESS": {
-                "type": "String",
-                "description": "IPv4 address of the communicating device"
-            },
-            "IP_V6_ADDRESS": {
-                "type": "String",
-                "description": "IPv6 address of the communicating device"
-            },
-            "IP_ADDRESS_TYPE": {
-                "type": "FixedString(1)",
-                "description": "IP address type: 1 (IPv4), 2 (IPv6), 3 (IPv4 or IPv6)",
-                "enum_values": {"1": "IPv4", "2": "IPv6", "3": "IPv4 or IPv6"}
-            },
-            "IMEI": {
-                "type": "String",
-                "description": "Identifier of the communicating device",
-                "business_meaning": "Unique device identifier for tracking"
-            },
-            "IMSI": {
-                "type": "UInt64",
-                "description": "SIM card identifier contained in the communicating device"
-            },
-            "MSISDN": {
-                "type": "String",
-                "description": "Phone number of the line"
-            },
-            "APN": {
-                "type": "String",
-                "description": "Access Point Name"
-            },
-            "CELL_ID": {
-                "type": "FixedString(8)",
-                "description": "Technical identifier of the antenna through which communication passed",
-                "foreign_key": "CELL.CELL_ID",
-                "business_meaning": "Links to geographic location information"
-            },
-            "TICKET_GENERATION": {
-                "type": "LowCardinality(String)",
-                "description": "Generation type (2G, 3G, 4G, NBIOT, LTEM, etc.)",
-                "business_meaning": "Technology used for communication"
-            }
-        }
-    },
-    "PLMN": {
-        "description": "Mobile operator information table - links operators to countries",
-        "primary_key": "PLMN",
-        "business_context": "Reference table for geographic analysis - essential for country-based queries",
-        "common_queries": ["country analysis", "operator distribution", "geographic statistics"],
-        "columns": {
-            "PLMN": {
-                "type": "String",
-                "description": "PLMN code (unique identifier for mobile network operators)",
-                "is_primary_key": True,
-                "business_meaning": "Mobile Network Code - identifies operator and country"
-            },
-            "PROVIDER": {
-                "type": "String",
-                "description": "Operator name (human-readable operator name)",
-                "business_meaning": "Commercial name of the mobile operator"
-            },
-            "COUNTRY_ISO3": {
-                "type": "String",
-                "description": "ISO3 country code (3-letter country identifier)",
-                "business_meaning": "Geographic location - use this for country-based analysis",
+            "city": {
+                "type": "TEXT",
+                "description": "City where the customer is located",
+                "business_meaning": "Geographic location for regional analysis and shipping",
                 "is_geographic": True
             }
         }
     },
-    "CELL": {
-        "description": "Cell tower/antenna information table - provides geographic coordinates",
-        "primary_key": "CELL_ID",
-        "business_context": "Geographic reference table for precise location analysis",
-        "common_queries": ["location analysis", "antenna coverage", "geographic distribution"],
+    "orders": {
+        "description": "Customer order transactions and details",
+        "primary_key": "order_id",
+        "business_context": "Core transaction data - contains all customer orders with products, quantities, and pricing",
+        "common_queries": ["sales analysis", "order tracking", "revenue calculations", "customer purchase history"],
         "columns": {
-            "CELL_ID": {
-                "type": "FixedString(8)",
-                "description": "Antenna identifier (unique cell tower ID)",
-                "is_primary_key": True
+            "order_id": {
+                "type": "INTEGER",
+                "description": "Unique identifier for each order",
+                "is_primary_key": True,
+                "business_meaning": "Primary key for order records"
             },
-            "PLMN": {
-                "type": "String",
-                "description": "PLMN code",
-                "foreign_key": "PLMN.PLMN",
-                "business_meaning": "Links cell to operator and country"
+            "customer_id": {
+                "type": "INTEGER",
+                "description": "Reference to the customer who placed the order",
+                "foreign_key": "customers.customer_id",
+                "business_meaning": "Links order to customer information"
             },
-            "LONGITUDE": {
-                "type": "Decimal(19,16)",
-                "description": "GPS longitude coordinate",
-                "is_geographic": True,
-                "unit": "degrees"
+            "product": {
+                "type": "TEXT",
+                "description": "Name of the product ordered",
+                "business_meaning": "Product identification for inventory and sales analysis"
             },
-            "LATITUDE": {
-                "type": "Decimal(19,16)",
-                "description": "GPS latitude coordinate",
-                "is_geographic": True,
-                "unit": "degrees"
+            "quantity": {
+                "type": "INTEGER",
+                "description": "Number of units ordered",
+                "business_meaning": "Quantity purchased for volume analysis",
+                "aggregatable": True
+            },
+            "price": {
+                "type": "REAL",
+                "description": "Price per unit in USD",
+                "business_meaning": "Unit price for revenue calculations",
+                "aggregatable": True,
+                "unit": "USD"
+            },
+            "order_date": {
+                "type": "TEXT",
+                "description": "Date when the order was placed (YYYY-MM-DD format)",
+                "business_meaning": "Order timestamp for time-based analysis",
+                "is_temporal": True,
+                "date_format": "YYYY-MM-DD"
             }
         }
     },
-    "CUSTOMER": {
-        "description": "Customer information table - basic customer data",
-        "primary_key": "PARTY_ID",
-        "business_context": "Customer reference table for customer-based analysis",
-        "common_queries": ["customer analysis", "customer count", "customer identification"],
+    "products": {
+        "description": "Product catalog and inventory information",
+        "primary_key": "product_id",
+        "business_context": "Product master data - contains product details, pricing, and inventory levels",
+        "common_queries": ["product catalog", "inventory analysis", "pricing analysis", "category breakdowns"],
         "columns": {
-            "PARTY_ID": {
-                "type": "UInt32",
-                "description": "Technical identifier of the client (unique customer ID)",
-                "is_primary_key": True
+            "product_id": {
+                "type": "INTEGER",
+                "description": "Unique identifier for each product",
+                "is_primary_key": True,
+                "business_meaning": "Primary key for product records"
             },
-            "NAME": {
-                "type": "String",
-                "description": "Customer name (commercial or technical name)"
+            "product_name": {
+                "type": "TEXT",
+                "description": "Name of the product",
+                "business_meaning": "Product identification and catalog display"
+            },
+            "category": {
+                "type": "TEXT",
+                "description": "Product category classification",
+                "business_meaning": "Product grouping for analysis and organization"
+            },
+            "price": {
+                "type": "REAL",
+                "description": "Current price of the product in USD",
+                "business_meaning": "Product pricing for revenue and margin analysis",
+                "aggregatable": True,
+                "unit": "USD"
+            },
+            "stock_quantity": {
+                "type": "INTEGER",
+                "description": "Current inventory level",
+                "business_meaning": "Available stock for inventory management",
+                "aggregatable": True
             }
         }
     }
@@ -195,146 +133,251 @@ TABLE_SCHEMAS = {
 
 # Enhanced relationship definitions with join patterns
 TABLE_RELATIONSHIPS = {
-    "RM_AGGREGATED_DATA": {
+    "customers": {
         "joins_to": {
-            "PLMN": {
-                "join_key": "PLMN",
-                "relationship": "many_to_one",
-                "purpose": "Get operator and country information",
-                "join_sql": "RM_AGGREGATED_DATA r JOIN PLMN p ON r.PLMN = p.PLMN"
-            },
-            "CELL": {
-                "join_key": "CELL_ID",
-                "relationship": "many_to_one",
-                "purpose": "Get precise geographic coordinates",
-                "join_sql": "RM_AGGREGATED_DATA r JOIN CELL c ON r.CELL_ID = c.CELL_ID"
-            },
-            "CUSTOMER": {
-                "join_key": "PARTY_ID",
-                "relationship": "many_to_one",
-                "purpose": "Get customer information",
-                "join_sql": "RM_AGGREGATED_DATA r JOIN CUSTOMER cust ON r.PARTY_ID = cust.PARTY_ID"
+            "orders": {
+                "join_key": "customer_id",
+                "relationship": "one_to_many",
+                "purpose": "Get customer's order history",
+                "join_sql": "customers c JOIN orders o ON c.customer_id = o.customer_id"
             }
         }
     },
-    "CELL": {
+    "orders": {
         "joins_to": {
-            "PLMN": {
-                "join_key": "PLMN",
+            "customers": {
+                "join_key": "customer_id",
                 "relationship": "many_to_one",
-                "purpose": "Get operator and country for cell location",
-                "join_sql": "CELL c JOIN PLMN p ON c.PLMN = p.PLMN"
+                "purpose": "Get customer information for orders",
+                "join_sql": "orders o JOIN customers c ON o.customer_id = c.customer_id"
+            },
+            "products": {
+                "join_key": "product_name",
+                "relationship": "many_to_one",
+                "purpose": "Get product details for orders",
+                "join_sql": "orders o JOIN products p ON o.product = p.product_name"
+            }
+        }
+    },
+    "products": {
+        "joins_to": {
+            "orders": {
+                "join_key": "product_name",
+                "relationship": "one_to_many",
+                "purpose": "Get order history for products",
+                "join_sql": "products p JOIN orders o ON p.product_name = o.product"
             }
         }
     }
 }
 
-# Query patterns with enhanced context
+# Enhanced query patterns with business context
 QUERY_PATTERNS = {
-    "geographic_analysis": {
-        "keywords": ["country", "geographic", "location", "répartition géographique", "pays", "region"],
-        "requires_tables": ["RM_AGGREGATED_DATA", "PLMN"],
-        "key_columns": ["PLMN.COUNTRY_ISO3"],
-        "common_joins": "RM_AGGREGATED_DATA r JOIN PLMN p ON r.PLMN = p.PLMN",
-        "example_sql": "SELECT p.COUNTRY_ISO3, COUNT(*) FROM RM_AGGREGATED_DATA r JOIN PLMN p ON r.PLMN = p.PLMN GROUP BY p.COUNTRY_ISO3"
+    "customer_analysis": {
+        "keywords": ["customer", "client", "user", "demographics", "customer analysis"],
+        "requires_tables": ["customers"],
+        "key_columns": ["name", "email", "age", "city"],
+        "common_joins": "customers c LEFT JOIN orders o ON c.customer_id = o.customer_id",
+        "example_sql": "SELECT c.name, c.city, COUNT(o.order_id) as order_count FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id"
     },
-    "data_usage": {
-        "keywords": ["upload", "download", "volume", "data", "traffic", "bytes", "usage"],
-        "requires_tables": ["RM_AGGREGATED_DATA"],
-        "key_columns": ["UPLOAD", "DOWNLOAD"],
-        "aggregations": ["SUM", "AVG", "MAX"],
-        "example_sql": "SELECT SUM(UPLOAD + DOWNLOAD) as total_data FROM RM_AGGREGATED_DATA"
+    "sales_analysis": {
+        "keywords": ["sales", "revenue", "orders", "transactions", "purchase"],
+        "requires_tables": ["orders"],
+        "key_columns": ["price", "quantity", "order_date"],
+        "aggregations": ["SUM", "COUNT", "AVG"],
+        "example_sql": "SELECT SUM(price * quantity) as total_revenue FROM orders"
+    },
+    "product_analysis": {
+        "keywords": ["product", "inventory", "stock", "catalog", "category"],
+        "requires_tables": ["products"],
+        "key_columns": ["product_name", "category", "price", "stock_quantity"],
+        "common_joins": "products p LEFT JOIN orders o ON p.product_name = o.product",
+        "example_sql": "SELECT category, COUNT(*) as product_count, AVG(price) as avg_price FROM products GROUP BY category"
     },
     "temporal_analysis": {
-        "keywords": ["time", "date", "period", "recent", "last", "yesterday", "today", "journées", "dernières"],
-        "requires_tables": ["RM_AGGREGATED_DATA"],
-        "key_columns": ["RECORD_OPENING_TIME", "RECORD_CLOSING_TIME"],
-        "common_filters": "WHERE RECORD_OPENING_TIME >= now() - INTERVAL X DAY",
-        "example_sql": "SELECT * FROM RM_AGGREGATED_DATA WHERE RECORD_OPENING_TIME >= now() - INTERVAL 2 DAY"
+        "keywords": ["time", "date", "period", "recent", "last", "daily", "monthly"],
+        "requires_tables": ["orders"],
+        "key_columns": ["order_date"],
+        "common_filters": "WHERE order_date >= date('now', '-30 days')",
+        "example_sql": "SELECT date(order_date) as order_day, COUNT(*) as daily_orders FROM orders WHERE order_date >= date('now', '-7 days') GROUP BY date(order_date)"
     },
-    "operator_analysis": {
-        "keywords": ["operator", "provider", "network", "PLMN", "opérateur"],
-        "requires_tables": ["RM_AGGREGATED_DATA", "PLMN"],
-        "key_columns": ["PLMN.PROVIDER"],
-        "common_joins": "RM_AGGREGATED_DATA r JOIN PLMN p ON r.PLMN = p.PLMN"
-    },
-    "customer_analysis": {
-        "keywords": ["customer", "client", "user", "subscriber", "customers"],
-        "requires_tables": ["RM_AGGREGATED_DATA", "CUSTOMER"],
-        "key_columns": ["CUSTOMER.NAME", "CUSTOMER.PARTY_ID"],
-        "common_joins": "RM_AGGREGATED_DATA r JOIN CUSTOMER c ON r.PARTY_ID = c.PARTY_ID"
+    "geographic_analysis": {
+        "keywords": ["city", "location", "geographic", "region", "area"],
+        "requires_tables": ["customers"],
+        "key_columns": ["city"],
+        "common_joins": "customers c JOIN orders o ON c.customer_id = o.customer_id",
+        "example_sql": "SELECT c.city, COUNT(o.order_id) as orders_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.city"
     }
 }
 
 # Business scenarios with SQL templates
 BUSINESS_SCENARIOS = {
-    "geographic_distribution": {
-        "description": "Analyze data distribution by country",
-        "keywords": ["geographic", "country", "distribution", "répartition", "pays"],
+    "customer_ranking": {
+        "description": "Rank customers by various metrics",
+        "keywords": ["top customers", "best customers", "customer ranking", "highest"],
         "sql_template": """
         SELECT 
-            p.COUNTRY_ISO3 as country,
-            COUNT(*) * 100.0 / (SELECT COUNT(*) FROM RM_AGGREGATED_DATA {time_filter}) as percentage
-        FROM RM_AGGREGATED_DATA r
-        JOIN PLMN p ON r.PLMN = p.PLMN
-        {time_filter}
-        GROUP BY p.COUNTRY_ISO3
-        ORDER BY percentage DESC
+            c.name,
+            c.city,
+            COUNT(o.order_id) as order_count,
+            SUM(o.price * o.quantity) as total_spent
+        FROM customers c
+        LEFT JOIN orders o ON c.customer_id = o.customer_id
+        GROUP BY c.customer_id, c.name, c.city
+        ORDER BY total_spent DESC
         LIMIT {limit}
         """,
-        "required_tables": ["RM_AGGREGATED_DATA", "PLMN"]
+        "required_tables": ["customers", "orders"]
     },
-    "data_usage_by_country": {
-        "description": "Analyze data consumption by country",
-        "keywords": ["data", "usage", "country", "consumption"],
+    "product_performance": {
+        "description": "Analyze product sales performance",
+        "keywords": ["product performance", "best selling", "popular products"],
         "sql_template": """
         SELECT 
-            p.COUNTRY_ISO3 as country,
-            SUM(r.UPLOAD + r.DOWNLOAD) as total_data,
-            AVG(r.UPLOAD + r.DOWNLOAD) as avg_data
-        FROM RM_AGGREGATED_DATA r
-        JOIN PLMN p ON r.PLMN = p.PLMN
-        {time_filter}
-        GROUP BY p.COUNTRY_ISO3
-        ORDER BY total_data DESC
+            p.product_name,
+            p.category,
+            p.price,
+            COALESCE(SUM(o.quantity), 0) as units_sold,
+            COALESCE(SUM(o.price * o.quantity), 0) as revenue
+        FROM products p
+        LEFT JOIN orders o ON p.product_name = o.product
+        GROUP BY p.product_id, p.product_name, p.category, p.price
+        ORDER BY revenue DESC
         LIMIT {limit}
         """,
-        "required_tables": ["RM_AGGREGATED_DATA", "PLMN"]
+        "required_tables": ["products", "orders"]
     },
-
-    "device_movement_detection": {
-        "description": "Detecting device movement between countries",
-        "keywords": ["movement", "move", "travel", "from", "to", "migration", "roaming"],
-        "sql_pattern": """
-    SELECT COUNT(DISTINCT a.IMEI) as device_count
-    FROM RM_AGGREGATED_DATA a
-    JOIN RM_AGGREGATED_DATA b ON a.IMEI = b.IMEI
-    JOIN PLMN pa ON a.PLMN = pa.PLMN  
-    JOIN PLMN pb ON b.PLMN = pb.PLMN
-    WHERE pa.COUNTRY_ISO3 = '{source_country}'
-      AND pb.COUNTRY_ISO3 = '{destination_country}'
-      AND a.RECORD_OPENING_TIME < b.RECORD_OPENING_TIME
-    """,
-        "requirements": [
-            "Use self-join on RM_AGGREGATED_DATA",
-            "Temporal ordering: a.RECORD_OPENING_TIME < b.RECORD_OPENING_TIME",
-            "Count DISTINCT devices (IMEI or AP_ID)",
-            "Never use single record for movement detection"
-        ]
+    "sales_trends": {
+        "description": "Analyze sales trends over time",
+        "keywords": ["sales trends", "daily sales", "monthly revenue", "time analysis"],
+        "sql_template": """
+        SELECT 
+            date(order_date) as order_date,
+            COUNT(*) as order_count,
+            SUM(price * quantity) as daily_revenue
+        FROM orders
+        WHERE order_date >= date('now', '-{days} days')
+        GROUP BY date(order_date)
+        ORDER BY order_date
+        """,
+        "required_tables": ["orders"]
     },
-
-    "time_interval_with_relative_dates": {
-        "description": "Time intervals with relative date references",
-        "keywords": ["yesterday", "between", "from", "to", "during", "hour", "minute"],
-        "sql_pattern": """
-    AND RECORD_OPENING_TIME >= toDateTime(toDate(now() - INTERVAL {days} DAY)) + INTERVAL {start_hour} HOUR
-    AND RECORD_OPENING_TIME < toDateTime(toDate(now() - INTERVAL {days} DAY)) + INTERVAL {start_hour} HOUR + INTERVAL {duration} MINUTE
-    """,
-        "requirements": [
-            "Use toDateTime and toDate for date calculations",
-            "Use INTERVAL arithmetic for time ranges",
-            "Never use toHour() or string extraction",
-            "Always treat RECORD_OPENING_TIME as DateTime"
-        ]
+    "inventory_status": {
+        "description": "Check inventory levels and stock status",
+        "keywords": ["inventory", "stock", "out of stock", "low stock"],
+        "sql_template": """
+        SELECT 
+            product_name,
+            category,
+            stock_quantity,
+            CASE 
+                WHEN stock_quantity = 0 THEN 'Out of Stock'
+                WHEN stock_quantity < 10 THEN 'Low Stock'
+                ELSE 'In Stock'
+            END as stock_status
+        FROM products
+        ORDER BY stock_quantity ASC
+        LIMIT {limit}
+        """,
+        "required_tables": ["products"]
+    },
+    "customer_demographics": {
+        "description": "Analyze customer demographics and distribution",
+        "keywords": ["demographics", "age distribution", "customer distribution", "geographic"],
+        "sql_template": """
+        SELECT 
+            city,
+            COUNT(*) as customer_count,
+            AVG(age) as avg_age,
+            MIN(age) as youngest_customer,
+            MAX(age) as oldest_customer
+        FROM customers
+        GROUP BY city
+        ORDER BY customer_count DESC
+        LIMIT {limit}
+        """,
+        "required_tables": ["customers"]
     }
 }
+
+def get_table_schema(table_name: str) -> Dict[str, Any]:
+    """Get schema for a specific table."""
+    return TABLE_SCHEMAS.get(table_name, {})
+
+def get_all_table_schemas() -> Dict[str, Dict[str, Any]]:
+    """Get all table schemas."""
+    return TABLE_SCHEMAS
+
+def get_table_relationships() -> Dict[str, Dict[str, Any]]:
+    """Get table relationships."""
+    return TABLE_RELATIONSHIPS
+
+def get_query_patterns() -> Dict[str, Dict[str, Any]]:
+    """Get query patterns."""
+    return QUERY_PATTERNS
+
+def get_business_scenarios() -> Dict[str, Dict[str, Any]]:
+    """Get business scenarios."""
+    return BUSINESS_SCENARIOS
+
+def list_tables() -> List[str]:
+    """List all available tables."""
+    return list(TABLE_SCHEMAS.keys())
+
+def get_column_info(table_name: str, column_name: str) -> Dict[str, Any]:
+    """Get detailed information about a specific column."""
+    table_schema = TABLE_SCHEMAS.get(table_name, {})
+    columns = table_schema.get('columns', {})
+    return columns.get(column_name, {})
+
+def get_foreign_keys(table_name: str) -> List[Dict[str, str]]:
+    """Get foreign key relationships for a table."""
+    foreign_keys = []
+    table_schema = TABLE_SCHEMAS.get(table_name, {})
+    columns = table_schema.get('columns', {})
+
+    for col_name, col_info in columns.items():
+        if 'foreign_key' in col_info:
+            foreign_keys.append({
+                'column': col_name,
+                'references': col_info['foreign_key'],
+                'description': col_info.get('business_meaning', '')
+            })
+
+    return foreign_keys
+
+def get_aggregatable_columns(table_name: str) -> List[str]:
+    """Get columns that can be aggregated (SUM, COUNT, AVG, etc.)."""
+    table_schema = TABLE_SCHEMAS.get(table_name, {})
+    columns = table_schema.get('columns', {})
+
+    aggregatable = []
+    for col_name, col_info in columns.items():
+        if col_info.get('aggregatable', False):
+            aggregatable.append(col_name)
+
+    return aggregatable
+
+def get_temporal_columns(table_name: str) -> List[str]:
+    """Get columns that contain temporal/date information."""
+    table_schema = TABLE_SCHEMAS.get(table_name, {})
+    columns = table_schema.get('columns', {})
+
+    temporal = []
+    for col_name, col_info in columns.items():
+        if col_info.get('is_temporal', False):
+            temporal.append(col_name)
+
+    return temporal
+
+def get_geographic_columns(table_name: str) -> List[str]:
+    """Get columns that contain geographic information."""
+    table_schema = TABLE_SCHEMAS.get(table_name, {})
+    columns = table_schema.get('columns', {})
+
+    geographic = []
+    for col_name, col_info in columns.items():
+        if col_info.get('is_geographic', False):
+            geographic.append(col_name)
+
+    return geographic

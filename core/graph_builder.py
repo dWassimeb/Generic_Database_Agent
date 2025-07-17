@@ -3,13 +3,13 @@ Graph Builder - Constructs the LangGraph workflow with Smart Schema Tool and Vis
 """
 
 from langgraph.graph import StateGraph, END
-from core.state import ClickHouseAgentState
+from core.state import GenericSQLAgentState
 from core.router import smart_router_node, route_condition
 from core.tool_nodes import execute_query_node, export_csv_node, format_response_node, smart_schema_node, create_visualization_node
 
-def create_clickhouse_graph(verbose: bool = True) -> StateGraph:
+def create_generic_sql_graph(verbose: bool = True) -> StateGraph:
     """
-    Create the complete LangGraph workflow for the ClickHouse Agent.
+    Create the complete LangGraph workflow for the Generic SQL Agent.
 
     This function builds the entire graph structure with:
     - Smart LLM-powered router for decision making
@@ -28,16 +28,16 @@ def create_clickhouse_graph(verbose: bool = True) -> StateGraph:
         print(f"🔧 GRAPH BUILDER: Constructing LangGraph workflow")
         print(f"   📋 Components: Smart Router + Agent + Tools + Schema + Visualization")
         print(f"   🤖 Router: LLM-powered intent classification")
-        print(f"   🧠 Schema: LLM-powered with ClickHouse SDK integration")
+        print(f"   🧠 Schema: LLM-powered with SQL database integration")
         print(f"   📈 Visualization: Modern interactive charts with Chart.js")
         print(f"   🔀 Flow: Conditional routing with specialized tool execution")
 
     # Initialize the agent for reasoning nodes
-    from core.agent import ClickHouseAgent
-    agent = ClickHouseAgent(verbose=verbose)
+    from core.agent import GenericSQLAgent
+    agent = GenericSQLAgent(verbose=verbose)
 
     # Create the StateGraph
-    workflow = StateGraph(ClickHouseAgentState)
+    workflow = StateGraph(GenericSQLAgentState)
 
     # ===== ADD NODES =====
 
@@ -93,7 +93,7 @@ def create_clickhouse_graph(verbose: bool = True) -> StateGraph:
         print(f"      • Data queries: Router → Intent → SQL → Execute → CSV → Visualization → Format → END")
         print(f"      • Schema queries: Router → Smart Schema → END")
         print(f"      • Help requests: Router → Format → END")
-        print(f"   🧠 Smart features: LLM routing + ClickHouse SDK schema + Interactive visualizations")
+        print(f"   🧠 Smart features: LLM routing + SQL database schema + Interactive visualizations")
 
     # Compile the graph
     compiled_graph = workflow.compile()
@@ -102,3 +102,6 @@ def create_clickhouse_graph(verbose: bool = True) -> StateGraph:
         print(f"   ✅ Graph compiled successfully - ready for execution!")
 
     return compiled_graph
+
+# Backward compatibility alias
+create_clickhouse_graph = create_generic_sql_graph

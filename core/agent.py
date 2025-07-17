@@ -1,18 +1,18 @@
 """
-Core ClickHouse Agent - AI reasoning and decision making
+Core Generic SQL Agent - AI reasoning and decision making
 """
 
 from typing import Dict, Any
 import logging
 from langchain_core.messages import HumanMessage
 
-from core.state import ClickHouseAgentState
+from core.state import GenericSQLAgentState
 # Removed router import - it's handled by graph_builder
-from core.graph_builder import create_clickhouse_graph
+from core.graph_builder import create_generic_sql_graph
 
 logger = logging.getLogger(__name__)
 
-class ClickHouseAgent:
+class GenericSQLAgent:
     """
     Core AI Agent responsible for reasoning and decision making.
 
@@ -42,7 +42,7 @@ class ClickHouseAgent:
             "visualization_creator": ModernVisualizationTool()
         }
 
-    def analyze_intent(self, state: ClickHouseAgentState) -> ClickHouseAgentState:
+    def analyze_intent(self, state: GenericSQLAgentState) -> GenericSQLAgentState:
         """
         Agent's reasoning process for understanding user intent.
 
@@ -84,17 +84,17 @@ class ClickHouseAgent:
 
         return state
 
-    def generate_sql(self, state: ClickHouseAgentState) -> ClickHouseAgentState:
+    def generate_sql(self, state: GenericSQLAgentState) -> GenericSQLAgentState:
         """
         Agent's reasoning process for SQL generation.
 
         The agent takes the analyzed intent and reasons about how to
-        convert it into optimal SQL for the ClickHouse database.
+        convert it into optimal SQL for the database.
         """
         if self.verbose:
             print(f"\n🤖 AGENT: Starting SQL generation")
             print(f"   💭 Thinking: How to convert intent into optimal SQL?")
-            print(f"   🎯 Goal: Generate accurate, efficient ClickHouse query")
+            print(f"   🎯 Goal: Generate accurate, efficient SQL query")
 
         try:
             # Agent extracts relevant intent data
@@ -189,9 +189,9 @@ class ClickHouseAgent:
 
         print(f"   ➡️  NEXT: Execute the generated SQL")
 
-class ClickHouseGraphAgent:
+class GenericSQLGraphAgent:
     """
-    Main interface for the ClickHouse LangGraph Agent.
+    Main interface for the Generic SQL LangGraph Agent.
 
     This class provides a clean interface to the LangGraph workflow
     and handles the overall execution flow.
@@ -199,7 +199,7 @@ class ClickHouseGraphAgent:
 
     def __init__(self, verbose: bool = True):
         self.verbose = verbose
-        self.graph = create_clickhouse_graph(verbose=verbose)
+        self.graph = create_generic_sql_graph(verbose=verbose)
 
     def process_question(self, user_question: str) -> str:
         """
@@ -219,7 +219,7 @@ class ClickHouseGraphAgent:
             print(f"{'='*80}")
 
         # Initialize state
-        initial_state = ClickHouseAgentState(
+        initial_state = GenericSQLAgentState(
             messages=[HumanMessage(content=user_question)],
             user_question=user_question,
             query_type="data_query",  # Will be overridden by smart router
@@ -258,3 +258,7 @@ class ClickHouseGraphAgent:
         except Exception as e:
             logger.error(f"LangGraph execution failed: {e}")
             return f"❌ **Error:** An error occurred while processing your question: {str(e)}"
+
+# Backward compatibility aliases
+ClickHouseAgent = GenericSQLAgent
+ClickHouseGraphAgent = GenericSQLGraphAgent

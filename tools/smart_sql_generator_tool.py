@@ -12,7 +12,7 @@ from config.schemas import TABLE_SCHEMAS
 logger = logging.getLogger(__name__)
 
 class SmartSqlGeneratorTool(BaseTool):
-    """Streamlined SQL generator focused on accurate ClickHouse queries."""
+    """Streamlined SQL generator focused on accurate SQL queries."""
 
     name: str = "generate_smart_sql"
     description: str = "Generate optimal SQL queries from intent analysis efficiently."
@@ -58,19 +58,27 @@ class SmartSqlGeneratorTool(BaseTool):
 
         # Get required tables
         table_analysis = intent_analysis.get('table_analysis', {})
-        required_tables = table_analysis.get('required_tables', ['RM_AGGREGATED_DATA'])
+        required_tables = table_analysis.get('required_tables', [])
 
-        context = "# ClickHouse SQL Context\n\n"
+        # Fallback to available tables if none specified
+        if not required_tables:
+            required_tables = list(TABLE_SCHEMAS.keys())[:2]  # Use first 2 tables as fallback
+
+        context = "# SQL Database Context\n\n"
 
         # Only include relevant table schemas
         for table_name in required_tables:
             if table_name in TABLE_SCHEMAS:
                 schema = TABLE_SCHEMAS[table_name]
                 context += f"## {table_name}\n"
+                context += f"Description: {schema.get('description', 'No description')}\n"
 
                 # Essential columns only
-                for col_name, col_info in schema.get('columns', {}).items():
-                    context += f"- {col_name} ({col_info['type']}): {col_info['description']}\n"
+                columns = schema.get('columns', {})
+                for col_name, col_info in columns.items():
+                    col_type = col_info.get('type', 'TEXT')
+                    col_desc = col_info.get('description', 'No description')
+                    context += f"- {col_name} ({col_type}): {col_desc}\n"
                 context += "\n"
 
         # Add specific join patterns if needed
@@ -82,106 +90,64 @@ class SmartSqlGeneratorTool(BaseTool):
                 context += f"- {join['from_table']} JOIN {join['to_table']} ON {join['join_condition']}\n"
             context += "\n"
 
-        # Add ClickHouse specifics
-        context += """# ClickHouse Functions:
-- toDate(column) - Convert to date
-- now() - Current timestamp  
-- INTERVAL X DAY - Time intervals
+        # Add SQLite specifics
+        context += """# SQLite Functions:
+- date(column) - Convert to date
+- datetime('now') - Current timestamp  
+- datetime('now', '-X days') - Date arithmetic
 - COUNT(*) - Count rows
-- Percentage: COUNT(*) * 100.0 / (SELECT COUNT(*) FROM table WHERE conditions)
+- Percentage: (COUNT(*) * 100.0) / (SELECT COUNT(*) FROM table WHERE conditions)
 
 # Critical Rules:
-- Geographic queries: Use PLMN.COUNTRY_ISO3 for countries
-- Time filters: Use RECORD_OPENING_TIME for date filtering
+- Use SQLite syntax (not MySQL or PostgreSQL)
 - Always include LIMIT clauses
+- Use proper JOIN syntax
+- Handle NULL values appropriately
 """
 
         return context
 
     def _generate_sql(self, user_question: str, sql_context: str, intent_analysis: Dict[str, Any]) -> str:
-        """Generate SQL with focused prompting and enhanced business rules."""
+        """Generate SQL with focused prompting."""
 
         # Build execution instructions
         instructions = self._build_instructions(intent_analysis)
 
-        prompt = f"""Generate ClickHouse SQL query based on analyzed intent.
+        prompt = f"""Generate SQLite SQL query based on analyzed intent.
 
-    {sql_context}
+{sql_context}
 
-    ## Analyzed Requirements:
-    {instructions}
+## Analyzed Requirements:
+{instructions}
 
-    ## User Question: "{user_question}"
+## User Question: "{user_question}"
 
-    ## SPECIAL BUSINESS RULES:
+## SQLite-Specific Guidelines:
 
-    ### 🚚 DEVICE MOVEMENT DETECTION:
-    When the user question involves **detecting movement of devices from country A to country B**, infer that a movement means the **same device (identified by IMEI or AP_ID) had communication records in both countries, at different times**, with the earlier one in country A and the later one in country B.
+### Common Query Patterns:
+1. **Customer Analysis**: SELECT customers.*, COUNT(orders.order_id) FROM customers LEFT JOIN orders ON customers.customer_id = orders.customer_id GROUP BY customers.customer_id
+2. **Sales Analysis**: SELECT SUM(price * quantity) as total_revenue FROM orders WHERE order_date >= date('now', '-30 days')
+3. **Product Performance**: SELECT product, SUM(quantity) as units_sold FROM orders GROUP BY product ORDER BY units_sold DESC
+4. **Time-based Analysis**: SELECT date(order_date) as order_day, COUNT(*) FROM orders WHERE order_date >= date('now', '-7 days') GROUP BY date(order_date)
 
-    **Required SQL Pattern:**
-    ```sql
-    SELECT COUNT(DISTINCT a.IMEI) as device_count
-    FROM RM_AGGREGATED_DATA a
-    JOIN RM_AGGREGATED_DATA b ON a.IMEI = b.IMEI  -- Same device
-    JOIN PLMN pa ON a.PLMN = pa.PLMN
-    JOIN PLMN pb ON b.PLMN = pb.PLMN
-    WHERE pa.COUNTRY_ISO3 = 'COUNTRY_A'
-      AND pb.COUNTRY_ISO3 = 'COUNTRY_B'
-      AND a.RECORD_OPENING_TIME < b.RECORD_OPENING_TIME  -- Temporal order
-      [AND time_range_filters]
-    ```
+### Join Patterns:
+- **Customer Orders**: customers c LEFT JOIN orders o ON c.customer_id = o.customer_id
+- **Order Products**: orders o LEFT JOIN products p ON o.product = p.product_name
+- **Full Analysis**: customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN products p ON o.product = p.product_name
 
-    **Key Rules:**
-    - Use **self-join** on RM_AGGREGATED_DATA table (aliases a and b)
-    - Table alias a: record in **country A** (earlier)
-    - Table alias b: record in **country B** (later)  
-    - Ensure: a.RECORD_OPENING_TIME < b.RECORD_OPENING_TIME
-    - Join both a and b to PLMN table to check COUNTRY_ISO3
-    - Count **DISTINCT devices** (DISTINCT a.IMEI or DISTINCT a.AP_ID)
-    - ❗ Never detect movement from a single record's PLMN
+### Date Handling:
+- **Recent data**: WHERE order_date >= date('now', '-X days')
+- **Date formatting**: date(order_date) for grouping by day
+- **Date comparisons**: WHERE order_date BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'
 
-    ### ⏰ TIME INTERVAL WITH RELATIVE DATES:
-    When the user question involves a **time interval** (e.g. "between 14h00 and 14h30") and a **relative date reference** (e.g. "yesterday"), use this exact pattern:
+Generate ONLY the SQL query - no explanations or markdown.
+Requirements:
+- Use SELECT statements only
+- Follow SQLite syntax exactly
+- Include appropriate LIMIT
+- Use proper JOIN syntax when needed
 
-    **Required SQL Pattern:**
-    ```sql
-    AND RECORD_OPENING_TIME >= toDateTime(toDate(now() - INTERVAL N DAY)) + INTERVAL X HOUR
-    AND RECORD_OPENING_TIME < toDateTime(toDate(now() - INTERVAL N DAY)) + INTERVAL X HOUR + INTERVAL Y MINUTE
-    ```
-
-    **Parameters:**
-    - N = number of days ago (1 for "yesterday", 2 for "day before yesterday")
-    - X = starting hour (14 for "14h00")
-    - Y = duration in minutes (30 for "30 minutes")
-
-    **Key Rules:**
-    - Always treat RECORD_OPENING_TIME as DateTime
-    - Never use toHour() or substring extraction for hour filtering
-    - Use interval arithmetic only
-    - Never compare DateTime to strings directly
-
-    ### 📊 STANDARD BUSINESS PATTERNS:
-
-    **Geographic Analysis:**
-    - Always use PLMN.COUNTRY_ISO3 for country identification
-    - Join RM_AGGREGATED_DATA with PLMN table via PLMN column
-
-    **Customer Analysis:**
-    - Join RM_AGGREGATED_DATA with CUSTOMER table via PARTY_ID
-    - Use CUSTOMER.NAME for customer identification
-
-    **Time-based Analysis:**
-    - Use RECORD_OPENING_TIME for all temporal filtering
-    - Format: toDate(), toDateTime(), INTERVAL syntax
-
-    Generate ONLY the SQL query - no explanations or markdown.
-    Requirements:
-    - Use SELECT statements only
-    - Follow ClickHouse syntax exactly
-    - Include appropriate LIMIT
-    - Apply the special business rules above when relevant
-
-    SQL Query:"""
+SQL Query:"""
 
         try:
             response = self.llm._call(prompt)
@@ -257,14 +223,14 @@ class SmartSqlGeneratorTool(BaseTool):
         # Find tables
         tables_used = []
         for table_name in TABLE_SCHEMAS.keys():
-            if table_name in sql_upper:
+            if table_name.upper() in sql_upper:
                 tables_used.append(table_name)
 
         # Detect features
         has_joins = 'JOIN' in sql_upper
         has_aggregation = any(func in sql_upper for func in ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN'])
         has_limit = 'LIMIT' in sql_upper
-        has_time_filter = 'RECORD_OPENING_TIME' in sql_upper
+        has_time_filter = any(func in sql_upper for func in ['DATE', 'DATETIME', 'ORDER_DATE'])
 
         # Estimate complexity
         complexity_score = len(tables_used) + (2 if has_joins else 0) + (1 if has_aggregation else 0)
