@@ -27,7 +27,7 @@ class SidebarManager:
 
     def _ensure_data_directory(self):
         """Ensure the data directory exists."""
-        os.makedirs("data", exist_ok=True)
+        os.makedirs("users_data", exist_ok=True)
 
     def render_sidebar(self):
         """Render the complete sidebar interface with optimized performance."""

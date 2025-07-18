@@ -51,11 +51,11 @@ class TelmiAgentBridge:
         """Test if we can import the required modules."""
         try:
             # Test core agent import
-            from core.agent import ClickHouseGraphAgent
+            from core.agent import GenericSQLGraphAgent
             logger.info("✅ Core agent import successful")
 
             # Test database import
-            from database.connection import clickhouse_connection
+            from database.connection import generic_db_connection
             logger.info("✅ Database connection import successful")
 
             return True
@@ -71,13 +71,13 @@ class TelmiAgentBridge:
     def initialize_agent(self, verbose: bool = False) -> bool:
         """Initialize the LangGraph agent."""
         try:
-            logger.info("🔧 Initializing ClickHouse LangGraph Agent...")
+            logger.info("🔧 Initializing Generic SQL LangGraph Agent...")
 
             # Import the agent class
-            from core.agent import ClickHouseGraphAgent
+            from core.agent import GenericSQLGraphAgent
 
             # 🔥 NO SHARED LLM NEEDED - Just create agent normally
-            self.agent = ClickHouseGraphAgent(verbose=verbose)
+            self.agent = GenericSQLGraphAgent(verbose=verbose)
 
             if self.agent is not None:
                 logger.info("✅ Agent initialized successfully")
@@ -102,15 +102,15 @@ class TelmiAgentBridge:
             return False
 
     def test_database_connection(self) -> Dict[str, Any]:
-        """Test the ClickHouse database connection."""
+        """Test the generic SQL database connection."""
         try:
-            logger.info("🔌 Testing ClickHouse database connection...")
+            logger.info("🔌 Testing generic SQL database connection...")
 
             # Import the connection
-            from database.connection import clickhouse_connection
+            from database.connection import generic_db_connection
 
             # Test the connection
-            if clickhouse_connection.test_connection():
+            if generic_db_connection.test_connection():
                 self.connection_tested = True
                 logger.info("✅ Database connection successful")
                 return {
@@ -119,13 +119,13 @@ class TelmiAgentBridge:
                     'status': 'connected'
                 }
             else:
-                error_msg = 'Database connection failed - server may be unreachable'
+                error_msg = 'Database connection failed - database file may not exist'
                 logger.error(f"❌ {error_msg}")
                 return {
                     'success': False,
                     'message': error_msg,
                     'status': 'disconnected',
-                    'suggestion': 'Check if ClickHouse server is running at 172.20.157.162:8123'
+                    'suggestion': 'Run database initialization: python database/initialize_db.py'
                 }
 
         except ImportError as e:
@@ -144,7 +144,7 @@ class TelmiAgentBridge:
                 'success': False,
                 'message': error_msg,
                 'status': 'error',
-                'suggestion': 'Check database configuration and network connectivity'
+                'suggestion': 'Check database configuration and run initialization script'
             }
 
     def process_question(self, user_question: str, username: str = "unknown") -> Dict[str, Any]:
@@ -160,14 +160,15 @@ class TelmiAgentBridge:
                         'success': False,
                         'response': f"""❌ **Agent Initialization Failed**
 
-**Issue:** Could not initialize the Telmi LangGraph agent.
+**Issue:** Could not initialize the Generic SQL LangGraph agent.
 
 **Last Error:** {self.last_error or 'Unknown error'}
 
 **Debug Steps:**
-1. Check if CLI agent works: `python3 main.py`
+1. Check if CLI agent works: `python main.py`
 2. Check terminal console for detailed errors
-3. Verify all dependencies: `pip install -r requirements.txt`""",
+3. Verify all dependencies: `pip install -r requirements.txt`
+4. Initialize database: `python database/initialize_db.py`""",
                         'error': 'Agent not initialized'
                     }
 
@@ -182,7 +183,13 @@ class TelmiAgentBridge:
 
 **Issue:** {db_test['message']}
 **Status:** {db_test['status']}
-**Suggestion:** {db_test.get('suggestion', 'Check database configuration')}""",
+**Suggestion:** {db_test.get('suggestion', 'Check database configuration')}
+
+**Quick Fix:**
+Run the database initialization script:
+```bash
+python database/initialize_db.py
+```""",
                         'error': db_test['message']
                     }
 

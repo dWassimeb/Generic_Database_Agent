@@ -50,7 +50,7 @@ class SmartIntentAnalyzerTool(BaseTool):
 
     def _build_focused_context(self) -> str:
         """Build minimal but complete schema context."""
-        context = "# ClickHouse Database Schema\n\n"
+        context = "# SQL Database Schema\n\n"
 
         # Essential table info only
         for table_name, schema in TABLE_SCHEMAS.items():
@@ -65,16 +65,19 @@ class SmartIntentAnalyzerTool(BaseTool):
                     col_info.get('foreign_key') or
                     col_info.get('is_geographic') or
                     col_info.get('is_temporal') or
-                    'NAME' in col_name.upper()):
+                    'NAME' in col_name.upper() or
+                    'ID' in col_name.upper()):
                     key_columns.append(f"{col_name} ({col_info['type']})")
 
             context += ", ".join(key_columns[:5]) + "\n\n"
 
         # Essential relationships
         context += "# Key Relationships\n"
-        context += "- RM_AGGREGATED_DATA → CUSTOMER (via PARTY_ID) for customer names\n"
-        context += "- RM_AGGREGATED_DATA → PLMN (via PLMN) for country info (COUNTRY_ISO3)\n"
-        context += "- RM_AGGREGATED_DATA → CELL (via CELL_ID) for location coordinates\n\n"
+        for table_name, relationships in TABLE_RELATIONSHIPS.items():
+            if relationships.get('joins_to'):
+                for target_table, join_info in relationships['joins_to'].items():
+                    context += f"- {table_name} → {target_table} (via {join_info.get('join_key', 'unknown')})\n"
+        context += "\n"
 
         return context
 
@@ -83,72 +86,72 @@ class SmartIntentAnalyzerTool(BaseTool):
 
         prompt = f"""Analyze this database query and provide a structured JSON response.
 
-    {schema_context}
+{schema_context}
 
-    User Question: "{user_question}"
+User Question: "{user_question}"
 
-    ## CHART TYPE DETECTION:
-    Detect if the user explicitly requested a specific chart/graph type:
+## CHART TYPE DETECTION:
+Detect if the user explicitly requested a specific chart/graph type:
 
-    **Keywords to detect:**
-    - "graphique en courbes", "line chart", "courbe", "évolution" → line
-    - "graphique en barres", "bar chart", "barres", "histogram" → bar  
-    - "barres horizontales", "horizontal bar", "ranking" → horizontal_bar
-    - "camembert", "pie chart", "secteurs", "répartition" → pie
-    - "donut", "doughnut", "anneau" → doughnut
-    - "nuage de points", "scatter plot", "corrélation" → scatter
-    - "radar", "toile d'araignée", "spider chart" → radar
+**Keywords to detect:**
+- "line chart", "line graph", "courbe", "évolution" → line
+- "bar chart", "bar graph", "barres", "histogram" → bar  
+- "horizontal bar", "ranking", "top" → horizontal_bar
+- "pie chart", "camembert", "secteurs", "répartition" → pie
+- "donut", "doughnut", "anneau" → doughnut
+- "scatter plot", "nuage de points", "corrélation" → scatter
+- "radar", "toile d'araignée", "spider chart" → radar
 
-    Provide analysis as JSON:
-    {{
-        "language": "french|english",
-        "intent_analysis": {{
-            "primary_intent": "geographic_distribution|customer_analysis|data_usage|temporal_analysis|general",
-            "intent_confidence": 0.9,
-            "business_scenario": "geographic_distribution|customer_ranking|data_analysis"
-        }},
-        "visualization_preferences": {{
-            "user_requested_chart_type": "line|bar|horizontal_bar|pie|doughnut|scatter|radar|auto",
-            "chart_type_confidence": 0.8,
-            "chart_keywords_detected": ["courbe", "évolution"]
-        }},
-        "table_analysis": {{
-            "required_tables": ["table1", "table2"],
-            "primary_table": "main_table"
-        }},
-        "join_analysis": {{
-            "required_joins": [
-                {{
-                    "from_table": "table1",
-                    "to_table": "table2",
-                    "join_condition": "table1.col = table2.col",
-                    "purpose": "why needed"
-                }}
-            ]
-        }},
-        "column_analysis": {{
-            "select_columns": [
-                {{"column": "table.column", "purpose": "grouping|aggregation", "alias": "name"}}
-            ],
-            "aggregation_needed": true,
-            "grouping_columns": ["table.column"]
-        }},
-        "temporal_analysis": {{
-            "needs_time_filter": true,
-            "time_column": "RECORD_OPENING_TIME",
-            "time_period": "7 days",
-            "time_filter_sql": "WHERE RECORD_OPENING_TIME >= now() - INTERVAL 7 DAY"
-        }},
-        "output_requirements": {{
-            "needs_percentage": false,
-            "suggested_limit": 10,
-            "sort_order": "DESC"
-        }}
+Provide analysis as JSON:
+{{
+    "language": "french|english",
+    "intent_analysis": {{
+        "primary_intent": "customer_analysis|sales_analysis|product_analysis|temporal_analysis|geographic_analysis|general",
+        "intent_confidence": 0.9,
+        "business_scenario": "customer_ranking|product_performance|sales_trends|inventory_status|customer_demographics"
+    }},
+    "visualization_preferences": {{
+        "user_requested_chart_type": "line|bar|horizontal_bar|pie|doughnut|scatter|radar|auto",
+        "chart_type_confidence": 0.8,
+        "chart_keywords_detected": ["courbe", "évolution"]
+    }},
+    "table_analysis": {{
+        "required_tables": ["table1", "table2"],
+        "primary_table": "main_table"
+    }},
+    "join_analysis": {{
+        "required_joins": [
+            {{
+                "from_table": "table1",
+                "to_table": "table2",
+                "join_condition": "table1.col = table2.col",
+                "purpose": "why needed"
+            }}
+        ]
+    }},
+    "column_analysis": {{
+        "select_columns": [
+            {{"column": "table.column", "purpose": "grouping|aggregation", "alias": "name"}}
+        ],
+        "aggregation_needed": true,
+        "grouping_columns": ["table.column"]
+    }},
+    "temporal_analysis": {{
+        "needs_time_filter": true,
+        "time_column": "order_date",
+        "time_period": "7 days",
+        "time_filter_sql": "WHERE order_date >= date('now', '-7 days')"
+    }},
+    "output_requirements": {{
+        "needs_percentage": false,
+        "suggested_limit": 10,
+        "sort_order": "DESC"
     }}
+}}
 
-    **CRITICAL:** If user explicitly mentions a chart type, set user_requested_chart_type to that type and confidence to 0.9+. If no chart type mentioned, set to "auto".
+**CRITICAL:** If user explicitly mentions a chart type, set user_requested_chart_type to that type and confidence to 0.9+. If no chart type mentioned, set to "auto".
 
-    JSON Response:"""
+JSON Response:"""
 
         try:
             response = self.llm._call(prompt)
@@ -182,16 +185,19 @@ class SmartIntentAnalyzerTool(BaseTool):
         # Detect language
         language = "french" if any(word in response_lower for word in ['français', 'répartition', 'clients', 'données']) else "english"
 
-        # Detect intent
-        if any(word in response_lower for word in ['geographic', 'country', 'pays', 'répartition']):
-            primary_intent = "geographic_distribution"
-            tables = ["RM_AGGREGATED_DATA", "PLMN"]
-        elif any(word in response_lower for word in ['customer', 'client', 'top']):
+        # Detect intent based on available tables
+        if any(word in response_lower for word in ['customer', 'client']):
             primary_intent = "customer_analysis"
-            tables = ["RM_AGGREGATED_DATA", "CUSTOMER"]
+            tables = ["customers", "orders"]
+        elif any(word in response_lower for word in ['product', 'inventory', 'stock']):
+            primary_intent = "product_analysis"
+            tables = ["products", "orders"]
+        elif any(word in response_lower for word in ['order', 'sales', 'revenue']):
+            primary_intent = "sales_analysis"
+            tables = ["orders", "customers"]
         else:
             primary_intent = "general"
-            tables = ["RM_AGGREGATED_DATA"]
+            tables = list(TABLE_SCHEMAS.keys())[:2]  # Use first 2 tables
 
         return {
             "language": language,
@@ -200,9 +206,14 @@ class SmartIntentAnalyzerTool(BaseTool):
                 "intent_confidence": 0.7,
                 "business_scenario": primary_intent
             },
+            "visualization_preferences": {
+                "user_requested_chart_type": "auto",
+                "chart_type_confidence": 0.5,
+                "chart_keywords_detected": []
+            },
             "table_analysis": {
                 "required_tables": tables,
-                "primary_table": "RM_AGGREGATED_DATA"
+                "primary_table": tables[0] if tables else "customers"
             },
             "join_analysis": {"required_joins": []},
             "column_analysis": {"select_columns": [], "aggregation_needed": True},
@@ -219,7 +230,7 @@ class SmartIntentAnalyzerTool(BaseTool):
 
         valid_tables = [table for table in required_tables if table in TABLE_SCHEMAS]
         if not valid_tables:
-            valid_tables = ["RM_AGGREGATED_DATA"]  # Fallback
+            valid_tables = list(TABLE_SCHEMAS.keys())[:2]  # Fallback to first 2 tables
 
         parsed_analysis['table_analysis']['required_tables'] = valid_tables
 

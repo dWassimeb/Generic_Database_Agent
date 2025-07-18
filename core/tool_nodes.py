@@ -4,20 +4,20 @@ Tool Nodes - Structured tool execution for the LangGraph workflow
 
 from typing import Dict, Any
 import logging
-from core.state import ClickHouseAgentState
+from core.state import GenericSQLAgentState
 
 logger = logging.getLogger(__name__)
 
-def execute_query_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def execute_query_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
-    Tool Node: Execute SQL query against ClickHouse database.
+    Tool Node: Execute SQL query against generic SQL database.
 
     This node takes the generated SQL and executes it safely,
     returning structured results for further processing.
     """
     if state.get("verbose", False):
         print(f"\n⚡ TOOL NODE: Query Executor")
-        print(f"   🎯 Task: Execute SQL against ClickHouse database")
+        print(f"   🎯 Task: Execute SQL against database")
         print(f"   🔒 Safety: Validation and limits applied")
 
     try:
@@ -64,7 +64,7 @@ def execute_query_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
 
     return state
 
-def export_csv_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def export_csv_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
     Tool Node: Export query results to CSV file.
 
@@ -126,7 +126,7 @@ def export_csv_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
 
     return state
 
-def create_visualization_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def create_visualization_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
     Tool Node: Create modern interactive visualizations from query results.
     Now supports user chart type preferences from intent analysis.
@@ -198,17 +198,17 @@ def create_visualization_node(state: ClickHouseAgentState) -> ClickHouseAgentSta
 
     return state
 
-def smart_schema_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def smart_schema_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
     Tool Node: Handle schema requests using LLM-powered Smart Schema Tool.
 
     This node processes any schema-related question with intelligent analysis
-    and uses ClickHouse SDK when possible, falling back to hardcoded schemas.
+    and uses database SDK when possible, falling back to hardcoded schemas.
     """
     if state.get("verbose", False):
         print(f"\n🧠 TOOL NODE: Smart Schema Handler")
         print(f"   🎯 Task: Process schema question with LLM reasoning")
-        print(f"   🔗 Method: ClickHouse SDK + LLM analysis + Hardcoded fallback")
+        print(f"   🔗 Method: Database SDK + LLM analysis + Hardcoded fallback")
 
     try:
         from tools.smart_schema_tool import SmartSchemaTool
@@ -225,9 +225,8 @@ def smart_schema_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
             state["final_response"] = result.get("formatted_response", "Schema information processed")
 
             if state.get("verbose", False):
-                schema_intent = result.get("schema_intent", {})
-                operation = schema_intent.get("operation", "unknown")
-                source = result.get("schema_data", {}).get("source", "unknown")
+                operation = result.get("operation", "unknown")
+                source = result.get("source", "unknown")
                 print(f"   ✅ SUCCESS: {operation} completed using {source}")
         else:
             state["final_response"] = result.get("formatted_response", f"❌ Schema error: {result.get('error', 'Unknown error')}")
@@ -245,7 +244,7 @@ def smart_schema_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
 
     return state
 
-def format_response_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def format_response_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
     Tool Node: Format the final response for the user.
 

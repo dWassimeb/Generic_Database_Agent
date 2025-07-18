@@ -952,7 +952,7 @@ class TelmiApp:
         if not st.session_state.user_info:
             return
 
-        sessions_file = "data/chat_sessions.json"
+        sessions_file = "users_data/chat_sessions.json"
 
         try:
             os.makedirs("data", exist_ok=True)
@@ -992,7 +992,7 @@ class TelmiApp:
             return
 
         username = st.session_state.user_info['username']
-        sessions_file = "data/chat_sessions.json"
+        sessions_file = "users_data/chat_sessions.json"
 
         try:
             if os.path.exists(sessions_file):

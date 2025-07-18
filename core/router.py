@@ -1,16 +1,16 @@
 """
-Smart Router Node - LLM-powered decision making logic for the ClickHouse Agent
+Smart Router Node - LLM-powered decision making logic for the Generic SQL Agent
 """
 
 from typing import Literal
 import json
 import logging
-from core.state import ClickHouseAgentState
+from core.state import GenericSQLAgentState
 from llm.custom_gpt import CustomGPT
 
 logger = logging.getLogger(__name__)
 
-def smart_router_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def smart_router_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
     Smart router node that uses LLM to analyze the user question and decide workflow path.
 
@@ -62,7 +62,7 @@ def smart_router_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
 
     return state
 
-def route_condition(state: ClickHouseAgentState) -> Literal["data_query", "schema_request", "help_request"]:
+def route_condition(state: GenericSQLAgentState) -> Literal["data_query", "schema_request", "help_request"]:
     """
     Condition function for conditional edges.
     This function only returns the routing decision based on the state.
@@ -81,7 +81,7 @@ def _classify_question_with_llm(llm: CustomGPT, question: str) -> dict:
         Dict with classification results
     """
 
-    prompt = f"""You are a smart router for a ClickHouse database agent. Analyze the user question and classify it into one of three categories.
+    prompt = f"""You are a smart router for a Generic SQL database agent. Analyze the user question and classify it into one of three categories.
 
 **Categories:**
 1. **data_query**: Questions asking for data from the database (analytics, counts, reports, statistics, etc.)
@@ -153,7 +153,7 @@ def _get_route_description(query_type: str) -> str:
     return descriptions.get(query_type, "Unknown route")
 
 # Keep the old router as backup
-def simple_router_node(state: ClickHouseAgentState) -> ClickHouseAgentState:
+def simple_router_node(state: GenericSQLAgentState) -> GenericSQLAgentState:
     """
     Fallback simple keyword-based router (backup option).
     """

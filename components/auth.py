@@ -20,7 +20,7 @@ class AuthManager:
 
     def _ensure_data_directory(self):
         """Ensure the data directory exists."""
-        os.makedirs("data", exist_ok=True)
+        os.makedirs("users_data", exist_ok=True)
 
     def _load_users(self):
         """Load users from the JSON file."""

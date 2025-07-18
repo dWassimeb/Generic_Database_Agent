@@ -289,3 +289,14 @@ Response:"""
 
         # Default fallback
         return "**Schema Information**\n\nProcessed your request but formatting failed."
+
+    def _format_bytes(self, bytes_value: int) -> str:
+        """Format bytes in human readable format."""
+        if not bytes_value or bytes_value == 0:
+            return "0 B"
+
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if bytes_value < 1024.0:
+                return f"{bytes_value:.1f} {unit}"
+            bytes_value /= 1024.0
+        return f"{bytes_value:.1f} PB"
