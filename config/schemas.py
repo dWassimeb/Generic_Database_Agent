@@ -1,6 +1,7 @@
 """
-Enhanced database schemas and metadata for the Generic SQL Agent.
-This file contains hardcoded advanced schema information.
+Enhanced database schemas and metadata for the France Services SQL Agent.
+This file contains detailed schema information for the PostgreSQL database.
+REPLACES config/schemas.py with correct France Services schema
 """
 
 from typing import Dict, Any, List
@@ -10,122 +11,423 @@ logger = logging.getLogger(__name__)
 
 # Enhanced table schemas with detailed business context
 TABLE_SCHEMAS = {
-    "customers": {
-        "description": "Customer information and demographics",
-        "primary_key": "customer_id",
-        "business_context": "Core customer data for CRM and analytics - contains customer demographics and contact information",
-        "common_queries": ["customer analysis", "demographic breakdowns", "customer lookup", "customer counts"],
+    "maisons_france_services": {
+        "description": "France Services offices and locations",
+        "primary_key": "id",
+        "business_context": "Physical locations providing government services to citizens - contains office details, services offered, and location information",
+        "common_queries": ["office analysis", "regional coverage", "service availability", "office locations"],
         "columns": {
-            "customer_id": {
+            "id": {
                 "type": "INTEGER",
-                "description": "Unique identifier for each customer",
+                "description": "Unique identifier for each France Services office",
                 "is_primary_key": True,
-                "business_meaning": "Primary key for customer records"
+                "business_meaning": "Primary key for office records"
             },
-            "name": {
-                "type": "TEXT",
-                "description": "Full name of the customer",
-                "business_meaning": "Customer's complete name for identification and communication"
+            "nom": {
+                "type": "VARCHAR(255)",
+                "description": "Name of the France Services office",
+                "business_meaning": "Official name of the service center"
             },
-            "email": {
+            "adresse": {
                 "type": "TEXT",
-                "description": "Email address of the customer",
-                "business_meaning": "Primary contact method for customer communication",
-                "is_unique": True
+                "description": "Full address of the office",
+                "business_meaning": "Physical location for citizen visits"
+            },
+            "code_postal": {
+                "type": "VARCHAR(10)",
+                "description": "Postal code of the office location",
+                "business_meaning": "Geographic identifier for regional analysis",
+                "is_geographic": True
+            },
+            "ville": {
+                "type": "VARCHAR(100)",
+                "description": "City where the office is located",
+                "business_meaning": "Urban location for geographic analysis",
+                "is_geographic": True
+            },
+            "departement": {
+                "type": "VARCHAR(100)",
+                "description": "Department (administrative division) of the office",
+                "business_meaning": "Administrative geographic division",
+                "is_geographic": True
+            },
+            "region": {
+                "type": "VARCHAR(100)",
+                "description": "Region where the office is located",
+                "business_meaning": "Large geographic region for territorial analysis",
+                "is_geographic": True
+            },
+            "latitude": {
+                "type": "DECIMAL(10,8)",
+                "description": "GPS latitude coordinate",
+                "business_meaning": "Precise geographic location for mapping",
+                "is_geographic": True
+            },
+            "longitude": {
+                "type": "DECIMAL(11,8)",
+                "description": "GPS longitude coordinate",
+                "business_meaning": "Precise geographic location for mapping",
+                "is_geographic": True
+            },
+            "type_structure": {
+                "type": "VARCHAR(50)",
+                "description": "Type of organization managing the office",
+                "business_meaning": "Administrative structure type (collectivite, association, etc.)"
+            },
+            "date_ouverture": {
+                "type": "DATE",
+                "description": "Date when the office opened",
+                "business_meaning": "Opening date for historical analysis",
+                "is_temporal": True
+            },
+            "nb_conseillers": {
+                "type": "INTEGER",
+                "description": "Number of advisors working at the office",
+                "business_meaning": "Staffing level for capacity analysis",
+                "aggregatable": True
+            },
+            "services_disponibles": {
+                "type": "TEXT",
+                "description": "List of services available (pipe-separated)",
+                "business_meaning": "Services offered to citizens"
+            },
+            "population_desservie": {
+                "type": "INTEGER",
+                "description": "Population served by this office",
+                "business_meaning": "Catchment area population for coverage analysis",
+                "aggregatable": True
+            },
+            "statut": {
+                "type": "VARCHAR(20)",
+                "description": "Current status of the office",
+                "business_meaning": "Operational status (active, inactive, etc.)"
+            }
+        }
+    },
+    "usagers": {
+        "description": "Citizens using France Services",
+        "primary_key": "id",
+        "business_context": "Citizens who visit France Services offices - contains demographics and usage patterns",
+        "common_queries": ["user demographics", "citizen analysis", "age distribution", "usage patterns"],
+        "columns": {
+            "id": {
+                "type": "INTEGER",
+                "description": "Unique identifier for each citizen user",
+                "is_primary_key": True,
+                "business_meaning": "Primary key for citizen records"
             },
             "age": {
                 "type": "INTEGER",
-                "description": "Age of the customer in years",
-                "business_meaning": "Customer age for demographic analysis and segmentation",
+                "description": "Age of the citizen in years",
+                "business_meaning": "Age for demographic analysis and service targeting",
                 "aggregatable": True
             },
-            "city": {
-                "type": "TEXT",
-                "description": "City where the customer is located",
-                "business_meaning": "Geographic location for regional analysis and shipping",
+            "genre": {
+                "type": "VARCHAR(10)",
+                "description": "Gender of the citizen (M/F)",
+                "business_meaning": "Gender for demographic analysis"
+            },
+            "situation_familiale": {
+                "type": "VARCHAR(50)",
+                "description": "Family situation (married, single, etc.)",
+                "business_meaning": "Family status affecting service needs"
+            },
+            "niveau_numerique": {
+                "type": "VARCHAR(20)",
+                "description": "Digital literacy level (debutant, intermediaire, avance)",
+                "business_meaning": "Digital skills level for service delivery planning"
+            },
+            "code_postal": {
+                "type": "VARCHAR(10)",
+                "description": "Postal code of citizen's residence",
+                "business_meaning": "Geographic location for territorial analysis",
                 "is_geographic": True
+            },
+            "ville": {
+                "type": "VARCHAR(100)",
+                "description": "City of citizen's residence",
+                "business_meaning": "Residential location for geographic analysis",
+                "is_geographic": True
+            },
+            "date_inscription": {
+                "type": "DATE",
+                "description": "Date when the citizen first registered",
+                "business_meaning": "Registration date for user growth analysis",
+                "is_temporal": True
+            },
+            "frequence_visite": {
+                "type": "VARCHAR(20)",
+                "description": "Visit frequency (regulier, occasionnel, nouveau)",
+                "business_meaning": "Usage pattern for service planning"
             }
         }
     },
-    "orders": {
-        "description": "Customer order transactions and details",
-        "primary_key": "order_id",
-        "business_context": "Core transaction data - contains all customer orders with products, quantities, and pricing",
-        "common_queries": ["sales analysis", "order tracking", "revenue calculations", "customer purchase history"],
+    "demandes": {
+        "description": "Service requests made by citizens",
+        "primary_key": "id",
+        "business_context": "All service requests submitted by citizens - core transaction data with service details, processing times, and satisfaction",
+        "common_queries": ["request analysis", "service demand", "satisfaction tracking", "processing times", "workload analysis"],
         "columns": {
-            "order_id": {
+            "id": {
                 "type": "INTEGER",
-                "description": "Unique identifier for each order",
+                "description": "Unique identifier for each service request",
                 "is_primary_key": True,
-                "business_meaning": "Primary key for order records"
+                "business_meaning": "Primary key for request records"
             },
-            "customer_id": {
+            "usager_id": {
                 "type": "INTEGER",
-                "description": "Reference to the customer who placed the order",
-                "foreign_key": "customers.customer_id",
-                "business_meaning": "Links order to customer information"
+                "description": "Reference to the citizen making the request",
+                "foreign_key": "usagers.id",
+                "business_meaning": "Links request to citizen information"
             },
-            "product": {
-                "type": "TEXT",
-                "description": "Name of the product ordered",
-                "business_meaning": "Product identification for inventory and sales analysis"
-            },
-            "quantity": {
+            "maison_fs_id": {
                 "type": "INTEGER",
-                "description": "Number of units ordered",
-                "business_meaning": "Quantity purchased for volume analysis",
+                "description": "Reference to the France Services office handling the request",
+                "foreign_key": "maisons_france_services.id",
+                "business_meaning": "Links request to service location"
+            },
+            "date_demande": {
+                "type": "TIMESTAMP",
+                "description": "Date and time when the request was submitted",
+                "business_meaning": "Request timestamp for temporal analysis",
+                "is_temporal": True
+            },
+            "type_service": {
+                "type": "VARCHAR(100)",
+                "description": "Type of service requested (emploi, retraite, famille, etc.)",
+                "business_meaning": "Service category for demand analysis"
+            },
+            "organisme_concerne": {
+                "type": "VARCHAR(100)",
+                "description": "Government organization involved (pole_emploi, caf, etc.)",
+                "business_meaning": "Responsible government agency"
+            },
+            "canal": {
+                "type": "VARCHAR(20)",
+                "description": "Service delivery channel (physique, telephone, visio, numerique)",
+                "business_meaning": "How the service was delivered"
+            },
+            "duree_traitement": {
+                "type": "INTEGER",
+                "description": "Processing time in minutes",
+                "business_meaning": "Time spent handling the request",
+                "aggregatable": True,
+                "unit": "minutes"
+            },
+            "satisfaction_score": {
+                "type": "INTEGER",
+                "description": "Citizen satisfaction score (1-5)",
+                "business_meaning": "Service quality measurement",
                 "aggregatable": True
             },
-            "price": {
-                "type": "REAL",
-                "description": "Price per unit in USD",
-                "business_meaning": "Unit price for revenue calculations",
-                "aggregatable": True,
-                "unit": "USD"
+            "resolu": {
+                "type": "BOOLEAN",
+                "description": "Whether the request was resolved",
+                "business_meaning": "Request resolution status"
             },
-            "order_date": {
-                "type": "TEXT",
-                "description": "Date when the order was placed (YYYY-MM-DD format)",
-                "business_meaning": "Order timestamp for time-based analysis",
-                "is_temporal": True,
-                "date_format": "YYYY-MM-DD"
+            "conseiller_id": {
+                "type": "INTEGER",
+                "description": "Reference to the advisor who handled the request",
+                "foreign_key": "conseillers.id",
+                "business_meaning": "Links request to staff member"
+            },
+            "complexite": {
+                "type": "VARCHAR(20)",
+                "description": "Complexity level (simple, moyen, complexe)",
+                "business_meaning": "Request difficulty for workload planning"
+            },
+            "suivi_necessaire": {
+                "type": "BOOLEAN",
+                "description": "Whether follow-up is needed",
+                "business_meaning": "Indicates if additional action required"
             }
         }
     },
-    "products": {
-        "description": "Product catalog and inventory information",
-        "primary_key": "product_id",
-        "business_context": "Product master data - contains product details, pricing, and inventory levels",
-        "common_queries": ["product catalog", "inventory analysis", "pricing analysis", "category breakdowns"],
+    "conseillers": {
+        "description": "Advisors working in France Services offices",
+        "primary_key": "id",
+        "business_context": "Staff members providing services to citizens - contains advisor details, specialties, and employment information",
+        "common_queries": ["staff analysis", "expertise mapping", "workload distribution", "advisor performance"],
         "columns": {
-            "product_id": {
+            "id": {
                 "type": "INTEGER",
-                "description": "Unique identifier for each product",
+                "description": "Unique identifier for each advisor",
                 "is_primary_key": True,
-                "business_meaning": "Primary key for product records"
+                "business_meaning": "Primary key for advisor records"
             },
-            "product_name": {
-                "type": "TEXT",
-                "description": "Name of the product",
-                "business_meaning": "Product identification and catalog display"
+            "nom": {
+                "type": "VARCHAR(100)",
+                "description": "Last name of the advisor",
+                "business_meaning": "Advisor identification"
             },
-            "category": {
-                "type": "TEXT",
-                "description": "Product category classification",
-                "business_meaning": "Product grouping for analysis and organization"
+            "prenom": {
+                "type": "VARCHAR(100)",
+                "description": "First name of the advisor",
+                "business_meaning": "Advisor identification"
             },
-            "price": {
-                "type": "REAL",
-                "description": "Current price of the product in USD",
-                "business_meaning": "Product pricing for revenue and margin analysis",
-                "aggregatable": True,
-                "unit": "USD"
-            },
-            "stock_quantity": {
+            "maison_fs_id": {
                 "type": "INTEGER",
-                "description": "Current inventory level",
-                "business_meaning": "Available stock for inventory management",
+                "description": "Reference to the France Services office where they work",
+                "foreign_key": "maisons_france_services.id",
+                "business_meaning": "Work location assignment"
+            },
+            "specialite": {
+                "type": "VARCHAR(50)",
+                "description": "Area of expertise",
+                "business_meaning": "Professional specialty for service matching"
+            },
+            "date_embauche": {
+                "type": "DATE",
+                "description": "Date when the advisor was hired",
+                "business_meaning": "Employment start date for tenure analysis",
+                "is_temporal": True
+            },
+            "temps_travail": {
+                "type": "VARCHAR(20)",
+                "description": "Work schedule type (temps_plein, temps_partiel)",
+                "business_meaning": "Employment type for capacity planning"
+            },
+            "niveau_experience": {
+                "type": "VARCHAR(20)",
+                "description": "Experience level (junior, senior, expert)",
+                "business_meaning": "Skill level for service assignment"
+            },
+            "statut": {
+                "type": "VARCHAR(20)",
+                "description": "Current employment status",
+                "business_meaning": "Active/inactive status"
+            }
+        }
+    },
+    "plannings": {
+        "description": "Office scheduling and capacity planning",
+        "primary_key": "id",
+        "business_context": "Daily schedules and staffing for France Services offices",
+        "common_queries": ["capacity analysis", "staffing levels", "operating hours"],
+        "columns": {
+            "id": {
+                "type": "INTEGER",
+                "description": "Unique identifier for each schedule entry",
+                "is_primary_key": True,
+                "business_meaning": "Primary key for schedule records"
+            },
+            "maison_fs_id": {
+                "type": "INTEGER",
+                "description": "Reference to the France Services office",
+                "foreign_key": "maisons_france_services.id",
+                "business_meaning": "Office being scheduled"
+            },
+            "date": {
+                "type": "DATE",
+                "description": "Date for this schedule",
+                "business_meaning": "Specific date for capacity planning",
+                "is_temporal": True
+            },
+            "jour_semaine": {
+                "type": "VARCHAR(20)",
+                "description": "Day of the week",
+                "business_meaning": "Weekly pattern analysis"
+            },
+            "heure_ouverture": {
+                "type": "DECIMAL(3,1)",
+                "description": "Opening time (24h format)",
+                "business_meaning": "Service availability start time"
+            },
+            "heure_fermeture": {
+                "type": "DECIMAL(3,1)",
+                "description": "Closing time (24h format)",
+                "business_meaning": "Service availability end time"
+            },
+            "nb_conseillers_prevus": {
+                "type": "INTEGER",
+                "description": "Number of advisors scheduled",
+                "business_meaning": "Planned staffing level",
                 "aggregatable": True
+            },
+            "nb_conseillers_presents": {
+                "type": "INTEGER",
+                "description": "Number of advisors actually present",
+                "business_meaning": "Actual staffing level",
+                "aggregatable": True
+            },
+            "fermeture_exceptionnelle": {
+                "type": "BOOLEAN",
+                "description": "Whether office was exceptionally closed",
+                "business_meaning": "Unplanned closure indicator"
+            }
+        }
+    },
+    "statistiques_mensuelles": {
+        "description": "Monthly performance statistics for each office",
+        "primary_key": "id",
+        "business_context": "Aggregated monthly data for performance monitoring and reporting",
+        "common_queries": ["monthly performance", "trends analysis", "KPI tracking"],
+        "columns": {
+            "id": {
+                "type": "INTEGER",
+                "description": "Unique identifier for each monthly record",
+                "is_primary_key": True,
+                "business_meaning": "Primary key for monthly statistics"
+            },
+            "maison_fs_id": {
+                "type": "INTEGER",
+                "description": "Reference to the France Services office",
+                "foreign_key": "maisons_france_services.id",
+                "business_meaning": "Office being measured"
+            },
+            "mois": {
+                "type": "INTEGER",
+                "description": "Month (1-12)",
+                "business_meaning": "Month for temporal analysis",
+                "is_temporal": True
+            },
+            "annee": {
+                "type": "INTEGER",
+                "description": "Year",
+                "business_meaning": "Year for temporal analysis",
+                "is_temporal": True
+            },
+            "nb_demandes": {
+                "type": "INTEGER",
+                "description": "Total number of requests that month",
+                "business_meaning": "Monthly request volume",
+                "aggregatable": True
+            },
+            "nb_demandes_resolues": {
+                "type": "INTEGER",
+                "description": "Number of requests resolved that month",
+                "business_meaning": "Monthly resolution count",
+                "aggregatable": True
+            },
+            "temps_moyen_resolution": {
+                "type": "INTEGER",
+                "description": "Average resolution time in minutes",
+                "business_meaning": "Monthly average processing time",
+                "aggregatable": True,
+                "unit": "minutes"
+            },
+            "satisfaction_moyenne": {
+                "type": "DECIMAL(3,2)",
+                "description": "Average satisfaction score for the month",
+                "business_meaning": "Monthly customer satisfaction",
+                "aggregatable": True
+            },
+            "nb_usagers_uniques": {
+                "type": "INTEGER",
+                "description": "Number of unique citizens served",
+                "business_meaning": "Monthly unique user count",
+                "aggregatable": True
+            },
+            "nb_nouveaux_usagers": {
+                "type": "INTEGER",
+                "description": "Number of new citizens registered",
+                "business_meaning": "Monthly new user acquisition",
+                "aggregatable": True
+            },
+            "taux_retour_usagers": {
+                "type": "DECIMAL(3,2)",
+                "description": "Percentage of returning citizens",
+                "business_meaning": "User retention rate"
             }
         }
     }
@@ -133,39 +435,79 @@ TABLE_SCHEMAS = {
 
 # Enhanced relationship definitions with join patterns
 TABLE_RELATIONSHIPS = {
-    "customers": {
+    "maisons_france_services": {
         "joins_to": {
-            "orders": {
-                "join_key": "customer_id",
+            "demandes": {
+                "join_key": "id = maison_fs_id",
                 "relationship": "one_to_many",
-                "purpose": "Get customer's order history",
-                "join_sql": "customers c JOIN orders o ON c.customer_id = o.customer_id"
-            }
-        }
-    },
-    "orders": {
-        "joins_to": {
-            "customers": {
-                "join_key": "customer_id",
-                "relationship": "many_to_one",
-                "purpose": "Get customer information for orders",
-                "join_sql": "orders o JOIN customers c ON o.customer_id = c.customer_id"
+                "purpose": "Get all requests for an office",
+                "join_sql": "maisons_france_services m JOIN demandes d ON m.id = d.maison_fs_id"
             },
-            "products": {
-                "join_key": "product_name",
-                "relationship": "many_to_one",
-                "purpose": "Get product details for orders",
-                "join_sql": "orders o JOIN products p ON o.product = p.product_name"
+            "conseillers": {
+                "join_key": "id = maison_fs_id",
+                "relationship": "one_to_many",
+                "purpose": "Get all advisors for an office",
+                "join_sql": "maisons_france_services m JOIN conseillers c ON m.id = c.maison_fs_id"
+            },
+            "plannings": {
+                "join_key": "id = maison_fs_id",
+                "relationship": "one_to_many",
+                "purpose": "Get office schedules",
+                "join_sql": "maisons_france_services m JOIN plannings p ON m.id = p.maison_fs_id"
+            },
+            "statistiques_mensuelles": {
+                "join_key": "id = maison_fs_id",
+                "relationship": "one_to_many",
+                "purpose": "Get monthly statistics for an office",
+                "join_sql": "maisons_france_services m JOIN statistiques_mensuelles s ON m.id = s.maison_fs_id"
             }
         }
     },
-    "products": {
+    "usagers": {
         "joins_to": {
-            "orders": {
-                "join_key": "product_name",
+            "demandes": {
+                "join_key": "id = usager_id",
                 "relationship": "one_to_many",
-                "purpose": "Get order history for products",
-                "join_sql": "products p JOIN orders o ON p.product_name = o.product"
+                "purpose": "Get all requests by a citizen",
+                "join_sql": "usagers u JOIN demandes d ON u.id = d.usager_id"
+            }
+        }
+    },
+    "demandes": {
+        "joins_to": {
+            "usagers": {
+                "join_key": "usager_id = id",
+                "relationship": "many_to_one",
+                "purpose": "Get citizen information for requests",
+                "join_sql": "demandes d JOIN usagers u ON d.usager_id = u.id"
+            },
+            "maisons_france_services": {
+                "join_key": "maison_fs_id = id",
+                "relationship": "many_to_one",
+                "purpose": "Get office information for requests",
+                "join_sql": "demandes d JOIN maisons_france_services m ON d.maison_fs_id = m.id"
+            },
+            "conseillers": {
+                "join_key": "conseiller_id = id",
+                "relationship": "many_to_one",
+                "purpose": "Get advisor information for requests",
+                "join_sql": "demandes d JOIN conseillers c ON d.conseiller_id = c.id"
+            }
+        }
+    },
+    "conseillers": {
+        "joins_to": {
+            "maisons_france_services": {
+                "join_key": "maison_fs_id = id",
+                "relationship": "many_to_one",
+                "purpose": "Get office information for advisors",
+                "join_sql": "conseillers c JOIN maisons_france_services m ON c.maison_fs_id = m.id"
+            },
+            "demandes": {
+                "join_key": "id = conseiller_id",
+                "relationship": "one_to_many",
+                "purpose": "Get all requests handled by an advisor",
+                "join_sql": "conseillers c JOIN demandes d ON c.id = d.conseiller_id"
             }
         }
     }
@@ -173,130 +515,149 @@ TABLE_RELATIONSHIPS = {
 
 # Enhanced query patterns with business context
 QUERY_PATTERNS = {
-    "customer_analysis": {
-        "keywords": ["customer", "client", "user", "demographics", "customer analysis"],
-        "requires_tables": ["customers"],
-        "key_columns": ["name", "email", "age", "city"],
-        "common_joins": "customers c LEFT JOIN orders o ON c.customer_id = o.customer_id",
-        "example_sql": "SELECT c.name, c.city, COUNT(o.order_id) as order_count FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id"
+    "citizen_analysis": {
+        "keywords": ["usager", "citoyen", "client", "utilisateur", "demographics", "citizen", "user"],
+        "requires_tables": ["usagers"],
+        "key_columns": ["age", "genre", "ville", "niveau_numerique", "frequence_visite"],
+        "common_joins": "usagers u LEFT JOIN demandes d ON u.id = d.usager_id",
+        "example_sql": "SELECT u.ville, COUNT(d.id) as nb_demandes FROM usagers u LEFT JOIN demandes d ON u.id = d.usager_id GROUP BY u.ville"
     },
-    "sales_analysis": {
-        "keywords": ["sales", "revenue", "orders", "transactions", "purchase"],
-        "requires_tables": ["orders"],
-        "key_columns": ["price", "quantity", "order_date"],
-        "aggregations": ["SUM", "COUNT", "AVG"],
-        "example_sql": "SELECT SUM(price * quantity) as total_revenue FROM orders"
+    "office_analysis": {
+        "keywords": ["maison", "bureau", "office", "location", "antenne", "structure"],
+        "requires_tables": ["maisons_france_services"],
+        "key_columns": ["nom", "ville", "region", "nb_conseillers", "services_disponibles", "population_desservie"],
+        "common_joins": "maisons_france_services m LEFT JOIN demandes d ON m.id = d.maison_fs_id",
+        "example_sql": "SELECT m.region, COUNT(m.id) as nb_maisons FROM maisons_france_services m GROUP BY m.region"
     },
-    "product_analysis": {
-        "keywords": ["product", "inventory", "stock", "catalog", "category"],
-        "requires_tables": ["products"],
-        "key_columns": ["product_name", "category", "price", "stock_quantity"],
-        "common_joins": "products p LEFT JOIN orders o ON p.product_name = o.product",
-        "example_sql": "SELECT category, COUNT(*) as product_count, AVG(price) as avg_price FROM products GROUP BY category"
+    "service_demand_analysis": {
+        "keywords": ["demande", "service", "request", "prestation", "traitement"],
+        "requires_tables": ["demandes"],
+        "key_columns": ["type_service", "organisme_concerne", "canal", "duree_traitement", "satisfaction_score"],
+        "aggregations": ["COUNT", "AVG", "SUM"],
+        "example_sql": "SELECT type_service, COUNT(*) as nb_demandes, AVG(satisfaction_score) as satisfaction FROM demandes GROUP BY type_service"
+    },
+    "staff_analysis": {
+        "keywords": ["conseiller", "advisor", "staff", "personnel", "employe"],
+        "requires_tables": ["conseillers"],
+        "key_columns": ["nom", "prenom", "specialite", "niveau_experience", "temps_travail"],
+        "common_joins": "conseillers c LEFT JOIN maisons_france_services m ON c.maison_fs_id = m.id",
+        "example_sql": "SELECT c.specialite, COUNT(*) as nb_conseillers FROM conseillers c GROUP BY c.specialite"
     },
     "temporal_analysis": {
-        "keywords": ["time", "date", "period", "recent", "last", "daily", "monthly"],
-        "requires_tables": ["orders"],
-        "key_columns": ["order_date"],
-        "common_filters": "WHERE order_date >= date('now', '-30 days')",
-        "example_sql": "SELECT date(order_date) as order_day, COUNT(*) as daily_orders FROM orders WHERE order_date >= date('now', '-7 days') GROUP BY date(order_date)"
+        "keywords": ["temps", "date", "periode", "recent", "mois", "annee", "daily", "monthly"],
+        "requires_tables": ["demandes", "statistiques_mensuelles"],
+        "key_columns": ["date_demande", "mois", "annee"],
+        "common_filters": "WHERE date_demande >= NOW() - INTERVAL '30 days'",
+        "example_sql": "SELECT DATE(date_demande) as jour, COUNT(*) as nb_demandes FROM demandes WHERE date_demande >= NOW() - INTERVAL '7 days' GROUP BY DATE(date_demande)"
     },
     "geographic_analysis": {
-        "keywords": ["city", "location", "geographic", "region", "area"],
-        "requires_tables": ["customers"],
-        "key_columns": ["city"],
-        "common_joins": "customers c JOIN orders o ON c.customer_id = o.customer_id",
-        "example_sql": "SELECT c.city, COUNT(o.order_id) as orders_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.city"
+        "keywords": ["region", "ville", "departement", "geographic", "territorial", "location"],
+        "requires_tables": ["maisons_france_services", "usagers"],
+        "key_columns": ["region", "ville", "departement", "code_postal"],
+        "example_sql": "SELECT m.region, COUNT(d.id) as nb_demandes FROM maisons_france_services m JOIN demandes d ON m.id = d.maison_fs_id GROUP BY m.region"
+    },
+    "performance_analysis": {
+        "keywords": ["performance", "satisfaction", "efficacite", "qualite", "kpi", "statistique"],
+        "requires_tables": ["demandes", "statistiques_mensuelles"],
+        "key_columns": ["satisfaction_score", "duree_traitement", "resolu", "satisfaction_moyenne"],
+        "aggregations": ["AVG", "COUNT", "SUM"],
+        "example_sql": "SELECT AVG(satisfaction_score) as satisfaction_moyenne, AVG(duree_traitement) as duree_moyenne FROM demandes WHERE resolu = true"
     }
 }
 
-# Business scenarios with SQL templates
+# Business scenarios with SQL templates for France Services
 BUSINESS_SCENARIOS = {
-    "customer_ranking": {
-        "description": "Rank customers by various metrics",
-        "keywords": ["top customers", "best customers", "customer ranking", "highest"],
+    "top_offices_by_requests": {
+        "description": "Rank offices by number of requests handled",
+        "keywords": ["top offices", "busiest offices", "most requests", "office ranking"],
         "sql_template": """
         SELECT 
-            c.name,
-            c.city,
-            COUNT(o.order_id) as order_count,
-            SUM(o.price * o.quantity) as total_spent
-        FROM customers c
-        LEFT JOIN orders o ON c.customer_id = o.customer_id
-        GROUP BY c.customer_id, c.name, c.city
-        ORDER BY total_spent DESC
+            m.nom,
+            m.ville,
+            m.region,
+            COUNT(d.id) as nb_demandes,
+            AVG(d.satisfaction_score) as satisfaction_moyenne
+        FROM maisons_france_services m
+        LEFT JOIN demandes d ON m.id = d.maison_fs_id
+        GROUP BY m.id, m.nom, m.ville, m.region
+        ORDER BY nb_demandes DESC
         LIMIT {limit}
         """,
-        "required_tables": ["customers", "orders"]
+        "required_tables": ["maisons_france_services", "demandes"]
     },
-    "product_performance": {
-        "description": "Analyze product sales performance",
-        "keywords": ["product performance", "best selling", "popular products"],
+    "citizen_demographics": {
+        "description": "Analyze citizen demographics and usage patterns",
+        "keywords": ["demographics", "age distribution", "citizen analysis", "user profile"],
         "sql_template": """
         SELECT 
-            p.product_name,
-            p.category,
-            p.price,
-            COALESCE(SUM(o.quantity), 0) as units_sold,
-            COALESCE(SUM(o.price * o.quantity), 0) as revenue
-        FROM products p
-        LEFT JOIN orders o ON p.product_name = o.product
-        GROUP BY p.product_id, p.product_name, p.category, p.price
-        ORDER BY revenue DESC
+            u.ville,
+            u.genre,
+            AVG(u.age) as age_moyen,
+            COUNT(u.id) as nb_usagers,
+            COUNT(d.id) as nb_demandes
+        FROM usagers u
+        LEFT JOIN demandes d ON u.id = d.usager_id
+        GROUP BY u.ville, u.genre
+        ORDER BY nb_demandes DESC
         LIMIT {limit}
         """,
-        "required_tables": ["products", "orders"]
+        "required_tables": ["usagers", "demandes"]
     },
-    "sales_trends": {
-        "description": "Analyze sales trends over time",
-        "keywords": ["sales trends", "daily sales", "monthly revenue", "time analysis"],
+    "service_demand_trends": {
+        "description": "Analyze service demand by type and trends",
+        "keywords": ["service demand", "popular services", "service trends", "type analysis"],
         "sql_template": """
         SELECT 
-            date(order_date) as order_date,
-            COUNT(*) as order_count,
-            SUM(price * quantity) as daily_revenue
-        FROM orders
-        WHERE order_date >= date('now', '-{days} days')
-        GROUP BY date(order_date)
-        ORDER BY order_date
-        """,
-        "required_tables": ["orders"]
-    },
-    "inventory_status": {
-        "description": "Check inventory levels and stock status",
-        "keywords": ["inventory", "stock", "out of stock", "low stock"],
-        "sql_template": """
-        SELECT 
-            product_name,
-            category,
-            stock_quantity,
-            CASE 
-                WHEN stock_quantity = 0 THEN 'Out of Stock'
-                WHEN stock_quantity < 10 THEN 'Low Stock'
-                ELSE 'In Stock'
-            END as stock_status
-        FROM products
-        ORDER BY stock_quantity ASC
+            type_service,
+            organisme_concerne,
+            COUNT(*) as nb_demandes,
+            AVG(satisfaction_score) as satisfaction_moyenne,
+            AVG(duree_traitement) as duree_moyenne
+        FROM demandes
+        WHERE date_demande >= NOW() - INTERVAL '{days} days'
+        GROUP BY type_service, organisme_concerne
+        ORDER BY nb_demandes DESC
         LIMIT {limit}
         """,
-        "required_tables": ["products"]
+        "required_tables": ["demandes"]
     },
-    "customer_demographics": {
-        "description": "Analyze customer demographics and distribution",
-        "keywords": ["demographics", "age distribution", "customer distribution", "geographic"],
+    "advisor_workload": {
+        "description": "Analyze advisor workload and performance",
+        "keywords": ["advisor performance", "staff workload", "conseiller analysis"],
         "sql_template": """
         SELECT 
-            city,
-            COUNT(*) as customer_count,
-            AVG(age) as avg_age,
-            MIN(age) as youngest_customer,
-            MAX(age) as oldest_customer
-        FROM customers
-        GROUP BY city
-        ORDER BY customer_count DESC
+            c.nom,
+            c.prenom,
+            c.specialite,
+            m.nom as office_name,
+            COUNT(d.id) as nb_demandes_traitees,
+            AVG(d.satisfaction_score) as satisfaction_moyenne
+        FROM conseillers c
+        LEFT JOIN demandes d ON c.id = d.conseiller_id
+        LEFT JOIN maisons_france_services m ON c.maison_fs_id = m.id
+        GROUP BY c.id, c.nom, c.prenom, c.specialite, m.nom
+        ORDER BY nb_demandes_traitees DESC
         LIMIT {limit}
         """,
-        "required_tables": ["customers"]
+        "required_tables": ["conseillers", "demandes", "maisons_france_services"]
+    },
+    "regional_coverage": {
+        "description": "Analyze service coverage by region",
+        "keywords": ["regional analysis", "territorial coverage", "geographic distribution"],
+        "sql_template": """
+        SELECT 
+            m.region,
+            COUNT(DISTINCT m.id) as nb_offices,
+            COUNT(d.id) as nb_demandes,
+            SUM(m.population_desservie) as population_totale,
+            AVG(d.satisfaction_score) as satisfaction_moyenne
+        FROM maisons_france_services m
+        LEFT JOIN demandes d ON m.id = d.maison_fs_id
+        GROUP BY m.region
+        ORDER BY nb_demandes DESC
+        LIMIT {limit}
+        """,
+        "required_tables": ["maisons_france_services", "demandes"]
     }
 }
 
@@ -323,6 +684,73 @@ def get_business_scenarios() -> Dict[str, Dict[str, Any]]:
 def list_tables() -> List[str]:
     """List all available tables."""
     return list(TABLE_SCHEMAS.keys())
+
+def get_columns_with_names(table_name: str) -> List[str]:
+    """Get columns that likely contain names or identifiers."""
+    table_schema = TABLE_SCHEMAS.get(table_name, {})
+    columns = table_schema.get('columns', {})
+
+    name_columns = []
+    for col_name, col_info in columns.items():
+        if any(keyword in col_name.lower() for keyword in ['nom', 'name', 'prenom', 'firstname']):
+            name_columns.append(col_name)
+
+    return name_columns
+
+def find_customer_equivalent_tables() -> List[str]:
+    """Find tables that contain customer/user information."""
+    customer_tables = []
+    for table_name, schema in TABLE_SCHEMAS.items():
+        business_context = schema.get('business_context', '').lower()
+        if any(keyword in business_context for keyword in ['citizen', 'user', 'customer', 'usager']):
+            customer_tables.append(table_name)
+    return customer_tables
+
+def get_name_queries_for_table(table_name: str, limit: int = 10) -> str:
+    """Generate appropriate SQL query to get names from a table."""
+    name_columns = get_columns_with_names(table_name)
+
+    if table_name == "usagers":
+        # Usagers table doesn't have names, so we use ID and demographics
+        return f"""
+        SELECT 
+            'Usager ' || id as identifier,
+            ville,
+            age,
+            genre
+        FROM {table_name}
+        ORDER BY RANDOM()
+        LIMIT {limit}
+        """
+    elif table_name == "conseillers":
+        # Conseillers has actual names
+        return f"""
+        SELECT 
+            nom || ' ' || prenom as full_name,
+            specialite,
+            niveau_experience
+        FROM {table_name}
+        ORDER BY RANDOM()
+        LIMIT {limit}
+        """
+    elif table_name == "maisons_france_services":
+        # Office names
+        return f"""
+        SELECT 
+            nom as office_name,
+            ville,
+            region
+        FROM {table_name}
+        ORDER BY RANDOM()
+        LIMIT {limit}
+        """
+    else:
+        # Generic fallback
+        if name_columns:
+            columns_str = ', '.join(name_columns)
+            return f"SELECT {columns_str} FROM {table_name} ORDER BY RANDOM() LIMIT {limit}"
+        else:
+            return f"SELECT * FROM {table_name} ORDER BY RANDOM() LIMIT {limit}"
 
 def get_column_info(table_name: str, column_name: str) -> Dict[str, Any]:
     """Get detailed information about a specific column."""
@@ -381,3 +809,39 @@ def get_geographic_columns(table_name: str) -> List[str]:
             geographic.append(col_name)
 
     return geographic
+
+def suggest_query_for_request(user_request: str) -> Dict[str, Any]:
+    """Suggest appropriate tables and columns based on user request."""
+    user_request_lower = user_request.lower()
+
+    suggestions = {
+        'tables': [],
+        'columns': [],
+        'query_pattern': None,
+        'suggested_sql': None
+    }
+
+    # Look for customer/user related requests
+    if any(keyword in user_request_lower for keyword in ['customer', 'client', 'user', 'people', 'citizen', 'usager', 'nom', 'name']):
+        if 'advisor' in user_request_lower or 'conseiller' in user_request_lower or 'staff' in user_request_lower:
+            suggestions['tables'] = ['conseillers']
+            suggestions['columns'] = ['nom', 'prenom', 'specialite']
+            suggestions['suggested_sql'] = get_name_queries_for_table('conseillers')
+        else:
+            suggestions['tables'] = ['usagers']
+            suggestions['columns'] = ['id', 'ville', 'age', 'genre']
+            suggestions['suggested_sql'] = get_name_queries_for_table('usagers')
+
+    # Look for office related requests
+    elif any(keyword in user_request_lower for keyword in ['office', 'location', 'maison', 'bureau']):
+        suggestions['tables'] = ['maisons_france_services']
+        suggestions['columns'] = ['nom', 'ville', 'region']
+        suggestions['suggested_sql'] = get_name_queries_for_table('maisons_france_services')
+
+    # Look for service/request related queries
+    elif any(keyword in user_request_lower for keyword in ['service', 'request', 'demande']):
+        suggestions['tables'] = ['demandes']
+        suggestions['columns'] = ['type_service', 'organisme_concerne', 'satisfaction_score']
+        suggestions['query_pattern'] = 'service_demand_analysis'
+
+    return suggestions
