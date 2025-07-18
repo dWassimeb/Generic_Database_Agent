@@ -8,7 +8,11 @@ from sqlalchemy.exc import OperationalError
 from rich.console import Console
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env.local first (for host development), then .env (for Docker)
+if os.path.exists('.env.local'):
+    load_dotenv('.env.local')
+else:
+    load_dotenv()
 
 
 class DatabaseConnection:
