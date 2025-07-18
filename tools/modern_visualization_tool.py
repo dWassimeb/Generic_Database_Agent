@@ -11,6 +11,7 @@ import json
 import os
 import logging
 from datetime import datetime, date
+from decimal import Decimal  # Import Decimal for PostgreSQL support
 from llm.custom_gpt import CustomGPT
 import unicodedata
 import re
@@ -88,6 +89,20 @@ class ModernVisualizationTool(BaseTool):
                 'error': str(e),
                 'message': f"Failed to create visualization: {str(e)}"
             }
+
+    def _is_numeric_value(self, value) -> bool:
+        """Check if a value is numeric (including PostgreSQL Decimal)."""
+        return isinstance(value, (int, float, Decimal))
+
+    def _to_float(self, value) -> float:
+        """Convert numeric value to float (handles Decimal)."""
+        if isinstance(value, Decimal):
+            return float(value)
+        elif isinstance(value, (int, float)):
+            return float(value)
+        else:
+            return 0.0
+
 
     def _extract_user_chart_preference(self, intent_analysis: Dict[str, Any]) -> Optional[str]:
         """Extract user's chart type preference from intent analysis."""
@@ -559,10 +574,21 @@ class ModernVisualizationTool(BaseTool):
         else:
             return str(int(num_value))
 
-    def _prepare_standard_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any], label_col: str, value_col: str) -> Dict[str, Any]:
-        """Prepare standard (non-time-series) data with proper column mapping."""
+    def _prepare_standard_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any],
+                               label_col: str, value_col: str) -> Dict[str, Any]:
+        """Prepare standard chart data with PostgreSQL Decimal support."""
 
         chart_type = viz_analysis.get('chart_type', 'bar')
+
+        try:
+            label_idx = columns.index(label_col)
+            value_idx = columns.index(value_col)
+        except ValueError as e:
+            logger.error(f"Column not found: {e}")
+            return {'labels': [], 'values': [], 'chart_type': chart_type, 'is_time_series': False}
+
+        labels = []
+        values = []
 
         if self._should_log_debug():
             logger.info(f"Standard data preparation:")
@@ -570,62 +596,32 @@ class ModernVisualizationTool(BaseTool):
             logger.info(f"  Columns available: {columns}")
             logger.info(f"  Label column (categories): {label_col}")
             logger.info(f"  Value column (numbers): {value_col}")
-
-        # Find column indices
-        try:
-            label_index = columns.index(label_col)
-        except ValueError:
-            label_index = 0
-            label_col = columns[0] if columns else 'Category'
-
-        try:
-            value_index = columns.index(value_col)
-        except ValueError:
-            # Find first numeric column
-            value_index = -1
-            for i, col in enumerate(columns):
-                if self._column_is_numeric_by_index(i, data):
-                    value_index = i
-                    value_col = col
-                    break
-            if value_index == -1:
-                value_index = 1 if len(columns) > 1 else 0
-                value_col = columns[value_index] if columns else 'Value'
-
-        if self._should_log_debug():
-            logger.info(f"  Final mapping: Label='{label_col}'[{label_index}], Value='{value_col}'[{value_index}]")
-
-        labels = []
-        values = []
+            logger.info(f"  Final mapping: Label='{label_col}'[{label_idx}], Value='{value_col}'[{value_idx}]")
 
         for row_idx, row in enumerate(data):
-            if len(row) > max(label_index, value_index):
-                # Get label (category) with UTF-8 cleaning
-                raw_label = row[label_index] if label_index < len(row) else f"Item {row_idx + 1}"
+            if label_idx < len(row) and value_idx < len(row):
+                raw_label = row[label_idx]
+                raw_value = row[value_idx]
+
+                # Handle label
                 if raw_label is None:
-                    raw_label = f"Item {row_idx + 1}"
-                label = self._clean_string_utf8(str(raw_label))
-
-                # Get value (number)
-                raw_value = row[value_index] if value_index < len(row) else 0
-
-                # Convert value to number if possible
-                if isinstance(raw_value, str):
-                    try:
-                        value = float(raw_value.replace(',', ''))
-                    except:
-                        value = 0
-                elif raw_value is None:
-                    value = 0
+                    label = f"Item {row_idx + 1}"
                 else:
-                    value = float(raw_value)
+                    label = str(raw_label)
+
+                # Handle value with PostgreSQL Decimal support
+                if raw_value is None:
+                    value = 0.0
+                else:
+                    value = self._to_float(raw_value)  # FIXED: Use helper function
 
                 labels.append(label)
                 values.append(value)
 
                 # Debug first few mappings
                 if self._should_log_debug() and row_idx < 3:
-                    logger.info(f"  Row {row_idx}: '{raw_label}' -> '{label}', {raw_value} -> {value}")
+                    logger.info(
+                        f"  Row {row_idx}: '{raw_label}' -> '{label}', {raw_value} ({type(raw_value).__name__}) -> {value}")
 
         # Limit data points for better visualization
         if len(labels) > 50:
@@ -830,14 +826,16 @@ class ModernVisualizationTool(BaseTool):
         return sample_values and all(isinstance(val, str) for val in sample_values)
 
     def _column_is_numeric(self, column_name: str, columns: List[str], data: List[List]) -> bool:
-        """Check if a column contains primarily numeric data."""
+        """Check if a column contains primarily numeric data (PostgreSQL compatible)."""
         try:
             col_index = columns.index(column_name)
         except ValueError:
             return False
 
         sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
-        return sample_values and all(isinstance(val, (int, float)) for val in sample_values)
+
+        # FIXED: Include Decimal type for PostgreSQL compatibility
+        return sample_values and all(self._is_numeric_value(val) for val in sample_values)
 
     def _might_be_date(self, value: str) -> bool:
         """Check if a string value might be a date."""
@@ -855,7 +853,7 @@ class ModernVisualizationTool(BaseTool):
         return any(re.search(pattern, value) for pattern in date_patterns)
 
     def _analyze_column_types(self, columns: List[str], data: List[List]) -> Dict[str, str]:
-        """Analyze what type of data each column contains."""
+        """Analyze what type of data each column contains (PostgreSQL compatible)."""
         column_types = {}
 
         for i, col in enumerate(columns):
@@ -863,7 +861,7 @@ class ModernVisualizationTool(BaseTool):
 
             if not sample_values:
                 column_types[col] = 'empty'
-            elif all(isinstance(val, (int, float)) for val in sample_values):
+            elif all(self._is_numeric_value(val) for val in sample_values):  # FIXED: Use helper function
                 column_types[col] = 'numeric'
             elif all(isinstance(val, str) for val in sample_values):
                 column_types[col] = 'text'
@@ -871,6 +869,38 @@ class ModernVisualizationTool(BaseTool):
                 column_types[col] = 'mixed'
 
         return column_types
+
+    def _has_sufficient_data_for_visualization(self, query_result: Dict[str, Any]) -> bool:
+        """Check if query result has sufficient data for visualization (PostgreSQL compatible)."""
+        if not query_result.get('success', True):
+            return False
+
+        result_data = query_result.get('result', {})
+        data = result_data.get('data', [])
+        columns = result_data.get('columns', [])
+
+        # Need at least 1 row and 2 columns for meaningful visualization
+        if len(data) < 1 or len(columns) < 2:
+            return False
+
+        # Check if we have at least one numeric column (including Decimal)
+        has_numeric = False
+        for row in data[:5]:  # Check first 5 rows
+            for value in row:
+                if self._is_numeric_value(value) and not (isinstance(value, float) and (value != value)):  # Check for NaN
+                    has_numeric = True
+                    break
+            if has_numeric:
+                break
+
+        logger.info(f"Data validation: {len(data)} rows, {len(columns)} columns, has_numeric: {has_numeric}")
+        if not has_numeric:
+            # Debug: show sample data types
+            sample_row = data[0] if data else []
+            sample_types = [type(val).__name__ for val in sample_row]
+            logger.info(f"Sample data types: {sample_types}")
+
+        return has_numeric
 
     def _create_professional_visualization(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any], user_question: str) -> str:
         """Create the professional HTML visualization file with safe UTF-8 handling."""
@@ -1777,4 +1807,4 @@ class ModernVisualizationTool(BaseTool):
 
     def _should_log_debug(self) -> bool:
         """Check if debug logging should be enabled."""
-        return logger.isEnabledFor(logging.DEBUG) or True  # Enable for debugging
+        return logger.isEnabledFor(logging.INFO)

@@ -1,5 +1,5 @@
 """
-Simple Agent Bridge with Global Token Tracking - No Shared LLM Needed
+Simple Agent Bridge with Global Token Tracking - PostgreSQL Support
 """
 
 import sys
@@ -21,7 +21,7 @@ for path in [project_root, current_dir]:
 logger = logging.getLogger(__name__)
 
 class TelmiAgentBridge:
-    """Simple bridge with global token tracking - no shared LLM complexity."""
+    """Simple bridge with global token tracking - PostgreSQL support."""
 
     def __init__(self):
         self.agent = None
@@ -54,8 +54,8 @@ class TelmiAgentBridge:
             from core.agent import GenericSQLGraphAgent
             logger.info("✅ Core agent import successful")
 
-            # Test database import
-            from database.connection import generic_db_connection
+            # Test POSTGRESQL database import (FIXED)
+            from src.database.connection import database_connection
             logger.info("✅ Database connection import successful")
 
             return True
@@ -102,49 +102,55 @@ class TelmiAgentBridge:
             return False
 
     def test_database_connection(self) -> Dict[str, Any]:
-        """Test the generic SQL database connection."""
+        """Test the PostgreSQL database connection."""
         try:
-            logger.info("🔌 Testing generic SQL database connection...")
+            logger.info("🔌 Testing PostgreSQL database connection...")
 
-            # Import the connection
-            from database.connection import generic_db_connection
+            # Import the POSTGRESQL connection (FIXED)
+            from src.database.connection import database_connection
 
             # Test the connection
-            if generic_db_connection.test_connection():
+            if database_connection.test_connection():
                 self.connection_tested = True
-                logger.info("✅ Database connection successful")
+                logger.info("✅ PostgreSQL database connection successful")
+
+                # Test tables
+                tables = database_connection.list_tables()
+                logger.info(f"✅ Found {len(tables)} tables: {tables}")
+
                 return {
                     'success': True,
-                    'message': 'Database connection successful',
-                    'status': 'connected'
+                    'message': f'PostgreSQL connection successful - {len(tables)} tables found',
+                    'status': 'connected',
+                    'tables': tables
                 }
             else:
-                error_msg = 'Database connection failed - database file may not exist'
+                error_msg = 'PostgreSQL database connection failed'
                 logger.error(f"❌ {error_msg}")
                 return {
                     'success': False,
                     'message': error_msg,
                     'status': 'disconnected',
-                    'suggestion': 'Run database initialization: python database/initialize_db.py'
+                    'suggestion': 'Check PostgreSQL server and run: poetry run init-db'
                 }
 
         except ImportError as e:
-            error_msg = f'Database module import failed: {e}'
+            error_msg = f'PostgreSQL database module import failed: {e}'
             logger.error(f"❌ {error_msg}")
             return {
                 'success': False,
                 'message': error_msg,
                 'status': 'import_error',
-                'suggestion': 'Check if database/ directory and modules exist'
+                'suggestion': 'Check if src/database/ directory and modules exist'
             }
         except Exception as e:
-            error_msg = f'Database connection error: {e}'
+            error_msg = f'PostgreSQL database connection error: {e}'
             logger.error(f"❌ {error_msg}")
             return {
                 'success': False,
                 'message': error_msg,
                 'status': 'error',
-                'suggestion': 'Check database configuration and run initialization script'
+                'suggestion': 'Check PostgreSQL configuration and .env file'
             }
 
     def process_question(self, user_question: str, username: str = "unknown") -> Dict[str, Any]:
@@ -166,9 +172,9 @@ class TelmiAgentBridge:
 
 **Debug Steps:**
 1. Check if CLI agent works: `python main.py`
-2. Check terminal console for detailed errors
-3. Verify all dependencies: `pip install -r requirements.txt`
-4. Initialize database: `python database/initialize_db.py`""",
+2. Check PostgreSQL connection: `poetry run python test_schema_mapping.py`
+3. Verify all dependencies: `poetry install`
+4. Initialize database: `poetry run init-db`""",
                         'error': 'Agent not initialized'
                     }
 
@@ -179,17 +185,16 @@ class TelmiAgentBridge:
                 if not db_test['success']:
                     return {
                         'success': False,
-                        'response': f"""❌ **Database Connection Failed**
+                        'response': f"""❌ **PostgreSQL Database Connection Failed**
 
 **Issue:** {db_test['message']}
 **Status:** {db_test['status']}
-**Suggestion:** {db_test.get('suggestion', 'Check database configuration')}
+**Suggestion:** {db_test.get('suggestion', 'Check PostgreSQL configuration')}
 
 **Quick Fix:**
-Run the database initialization script:
-```bash
-python database/initialize_db.py
-```""",
+1. Start PostgreSQL server
+2. Run: `poetry run generate-data`
+3. Run: `poetry run init-db`""",
                         'error': db_test['message']
                     }
 
@@ -207,87 +212,61 @@ python database/initialize_db.py
                         sys.path.insert(0, path)
 
                 from llm.global_token_tracker import global_token_tracker
-                global_token_tracker.start_session(user_question, username)
+
+                # Start tracking session
+                session_id = global_token_tracker.start_session(user_question, username)
                 logger.info(f"🔥 Started global token tracking session for user: {username}")
-            except ImportError as e:
-                logger.warning(f"⚠️ Global token tracker not available: {e}")
-                global_token_tracker = None
 
-            # Process DIRECTLY without threading
-            logger.info(f"🧠 Starting direct LangGraph processing...")
-            start_time = datetime.now()
+            except ImportError:
+                logger.warning("⚠️  Global token tracker not available, proceeding without tracking")
+                session_id = None
 
-            try:
-                # Call agent directly
-                response = self.agent.process_question(user_question)
+            # Process question through LangGraph
+            logger.info("🧠 Starting direct LangGraph processing...")
 
-                end_time = datetime.now()
-                processing_time = (end_time - start_time).total_seconds()
+            # Use the agent to process the question
+            response = self.agent.process_question(user_question)
 
-                # 🔥 EXPORT TOKEN USAGE TO CSV
-                csv_file = None
-                token_summary = None
-                if global_token_tracker:
-                    try:
-                        csv_file = global_token_tracker.export_session()
-                        token_summary = global_token_tracker.get_session_summary()
-                        logger.info(f"🔥 Token tracking completed: {token_summary}")
-                    except Exception as e:
-                        logger.warning(f"⚠️ Could not export token usage: {e}")
-
-                logger.info(f"✅ LangGraph processing completed in {processing_time:.2f} seconds")
-
-                return {
-                    'success': True,
-                    'response': response,
-                    'processing_time': processing_time,
-                    'token_usage': token_summary,
-                    'token_report_file': csv_file,
-                    'message': 'Question processed successfully'
-                }
-
-            except Exception as e:
-                end_time = datetime.now()
-                processing_time = (end_time - start_time).total_seconds()
-
-                # 🔥 STILL EXPORT TOKEN USAGE EVEN ON ERROR
-                csv_file = None
-                token_summary = None
+            # 🔥 END TOKEN TRACKING AND GET SUMMARY
+            if session_id:
                 try:
-                    from llm.global_token_tracker import global_token_tracker
-                    csv_file = global_token_tracker.export_session()
-                    token_summary = global_token_tracker.get_session_summary()
-                except ImportError:
-                    pass
+                    token_summary = global_token_tracker.end_session(session_id)
+                    csv_file = global_token_tracker.export_session_to_csv(session_id)
 
-                error_msg = f"LangGraph processing failed after {processing_time:.2f}s: {e}"
-                logger.error(f"❌ {error_msg}")
-                logger.error(f"Full traceback: {traceback.format_exc()}")
+                    logger.info(f"🔥 Token tracking completed: {token_summary}")
 
-                return {
-                    'success': False,
-                    'response': f"""❌ **LangGraph Processing Error**
+                    return {
+                        'success': True,
+                        'response': response,
+                        'token_usage': token_summary,
+                        'token_report_file': csv_file
+                    }
+                except Exception as token_error:
+                    logger.warning(f"⚠️  Token tracking end failed: {token_error}")
 
-**Issue:** {str(e)}
-
-**Processing Time:** {processing_time:.2f} seconds
-
-**Type:** {type(e).__name__}
-
-**Token Usage:** {token_summary.get('total_tokens', 0) if token_summary else 0} tokens
-
-**Debug Info:** The agent workflow failed during execution. Check the terminal console for detailed traceback.
-
-**Your Question:** "{user_question}" """,
-                    'error': str(e),
-                    'token_usage': token_summary,
-                    'token_report_file': csv_file
-                }
+            # Return response without token tracking if tracking failed
+            logger.info("✅ LangGraph processing completed")
+            return {
+                'success': True,
+                'response': response
+            }
 
         except Exception as e:
             error_msg = f"Question processing failed: {e}"
             logger.error(f"❌ {error_msg}")
             logger.error(f"Traceback: {traceback.format_exc()}")
+
+            # Try to end token tracking session if it exists
+            try:
+                if 'session_id' in locals() and session_id:
+                    token_summary = global_token_tracker.end_session(session_id)
+                    csv_file = global_token_tracker.export_session_to_csv(session_id)
+                else:
+                    token_summary = None
+                    csv_file = None
+            except:
+                token_summary = None
+                csv_file = None
 
             return {
                 'success': False,
@@ -299,7 +278,9 @@ python database/initialize_db.py
 **Debug Info:** Check the terminal for full error details.
 
 **Timestamp:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}""",
-                'error': str(e)
+                'error': str(e),
+                'token_usage': token_summary,
+                'token_report_file': csv_file
             }
 
     def get_agent_status(self) -> Dict[str, Any]:
@@ -337,8 +318,8 @@ python database/initialize_db.py
 
     def _check_project_structure(self) -> bool:
         """Check if the required project structure exists."""
-        required_dirs = ['core', 'database', 'tools']
-        required_files = ['main.py', 'core/agent.py', 'database/connection.py']
+        required_dirs = ['core', 'src/database', 'tools']
+        required_files = ['main.py', 'core/agent.py', 'src/database/connection.py']
 
         missing = []
 

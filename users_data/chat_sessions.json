@@ -47,5 +47,697 @@
     ],
     "timestamp": "2025-07-18T15:01:00.958930",
     "user": "wassime"
+  },
+  "62b69a22-be72-463b-97b0-4c0b5ee58aa0": {
+    "title": "Combien Maisons France",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Combien de maisons France Services y a-t-il par région ?",
+        "timestamp": "2025-07-18T15:16:36.012378",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 12 records across 2 columns\n\n• **region:** 12 unique values\n\n• **nb_maisons:** Range 17 - 34, Avg 25\n\n• **Range:** From Auvergne-Rhône-Alpes to Hauts-de-France\n\n**⚡ Executed Query:**\n\n```sql\nSELECT region, COUNT(*) as nb_maisons\nFROM maisons_france_services\nGROUP BY region\nORDER BY nb_maisons DESC\nLIMIT 100\n```\n\n**📈 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*⏱️ Processed in 5.39 seconds*",
+        "timestamp": "2025-07-18T15:16:41.482064",
+        "attachments": {
+          "csv": {
+            "filename": "query_combien_de_maisons_france_serv_20250718_151640.csv",
+            "path": "exports/query_combien_de_maisons_france_serv_20250718_151640.csv",
+            "size": "0.2 KB"
+          },
+          "chart": {
+            "filename": "chart_20250718_151641.html",
+            "path": "visualizations/chart_20250718_151641.html",
+            "size": "11.4 KB"
+          },
+          "table_data": {
+            "columns": [
+              "region",
+              "nb_maisons"
+            ],
+            "data": [
+              [
+                "Auvergne-Rhône-Alpes",
+                34
+              ],
+              [
+                "Île-de-France",
+                30
+              ],
+              [
+                "Occitanie",
+                30
+              ],
+              [
+                "Provence-Alpes-Côte d'Azur",
+                27
+              ],
+              [
+                "Normandie",
+                27
+              ],
+              [
+                "Pays de la Loire",
+                26
+              ],
+              [
+                "Nouvelle-Aquitaine",
+                25
+              ],
+              [
+                "Corse",
+                23
+              ],
+              [
+                "Grand Est",
+                22
+              ],
+              [
+                "Centre-Val de Loire",
+                20
+              ],
+              [
+                "Bretagne",
+                19
+              ],
+              [
+                "Hauts-de-France",
+                17
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "role": "user",
+        "content": "Évolution du nombre de demandes par mois cette année",
+        "timestamp": "2025-07-18T15:17:09.352396",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "❌ **Error:** Database query error occurred\n\n💡 **Suggestion:** Please try rephrasing your question or contact support\n\n*⏱️ Processed in 4.17 seconds*",
+        "timestamp": "2025-07-18T15:17:13.590073",
+        "attachments": {
+          "csv": {
+            "filename": "query_combien_de_maisons_france_serv_20250718_151640.csv",
+            "path": "exports/query_combien_de_maisons_france_serv_20250718_151640.csv",
+            "size": "0.2 KB"
+          },
+          "chart": {
+            "filename": "chart_20250718_151641.html",
+            "path": "visualizations/chart_20250718_151641.html",
+            "size": "11.4 KB"
+          },
+          "table_data": {
+            "columns": [
+              "region",
+              "nb_maisons"
+            ],
+            "data": [
+              [
+                "Auvergne-Rhône-Alpes",
+                34
+              ],
+              [
+                "Île-de-France",
+                30
+              ],
+              [
+                "Occitanie",
+                30
+              ],
+              [
+                "Provence-Alpes-Côte d'Azur",
+                27
+              ],
+              [
+                "Normandie",
+                27
+              ],
+              [
+                "Pays de la Loire",
+                26
+              ],
+              [
+                "Nouvelle-Aquitaine",
+                25
+              ],
+              [
+                "Corse",
+                23
+              ],
+              [
+                "Grand Est",
+                22
+              ],
+              [
+                "Centre-Val de Loire",
+                20
+              ],
+              [
+                "Bretagne",
+                19
+              ],
+              [
+                "Hauts-de-France",
+                17
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "timestamp": "2025-07-18T15:22:09.800941",
+    "user": "wassime"
+  },
+  "bf50b94b-1ef0-4492-8bc6-73948718417d": {
+    "title": "Évolution Nombre",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Évolution du nombre de demandes par mois cette année",
+        "timestamp": "2025-07-18T15:22:11.870056",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "❌ **Error:** No SQL query to execute\n\n*⏱️ Processed in 6.85 seconds*",
+        "timestamp": "2025-07-18T15:22:18.793629",
+        "attachments": {
+          "csv": {
+            "filename": "query_combien_de_maisons_france_serv_20250718_151640.csv",
+            "path": "exports/query_combien_de_maisons_france_serv_20250718_151640.csv",
+            "size": "0.2 KB"
+          },
+          "table_data": {
+            "columns": [
+              "region",
+              "nb_maisons"
+            ],
+            "data": [
+              [
+                "Auvergne-Rhône-Alpes",
+                34
+              ],
+              [
+                "Île-de-France",
+                30
+              ],
+              [
+                "Occitanie",
+                30
+              ],
+              [
+                "Provence-Alpes-Côte d'Azur",
+                27
+              ],
+              [
+                "Normandie",
+                27
+              ],
+              [
+                "Pays de la Loire",
+                26
+              ],
+              [
+                "Nouvelle-Aquitaine",
+                25
+              ],
+              [
+                "Corse",
+                23
+              ],
+              [
+                "Grand Est",
+                22
+              ],
+              [
+                "Centre-Val de Loire",
+                20
+              ],
+              [
+                "Bretagne",
+                19
+              ],
+              [
+                "Hauts-de-France",
+                17
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "role": "user",
+        "content": "Évolution du nombre de demandes par mois cette année",
+        "timestamp": "2025-07-18T15:23:22.781868",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 7 records across 2 columns\n\n• **mois:** 7 unique values\n\n• **nombre_de_demandes:** Range 748 - 1.3K, Avg 1.2K\n\n• **Range:** From 2025-01 to 2025-07\n\n**⚡ Executed Query:**\n\n```sql\nSELECT TO_CHAR(DATE_TRUNC('month', date_demande), 'YYYY-MM') AS mois, COUNT(*) AS nombre_de_demandes\nFROM demandes\nWHERE EXTRACT(YEAR\nFROM date_demande) = EXTRACT(YEAR\nFROM CURRENT_DATE)\nGROUP BY DATE_TRUNC('month', date_demande)\nORDER BY mois\nLIMIT 12\n```\n\n**📈 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*⏱️ Processed in 6.01 seconds*",
+        "timestamp": "2025-07-18T15:23:28.866350",
+        "attachments": {
+          "csv": {
+            "filename": "query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "path": "exports/query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "size": "0.1 KB"
+          },
+          "chart": {
+            "filename": "chart_20250718_152328.html",
+            "path": "visualizations/chart_20250718_152328.html",
+            "size": "11.4 KB"
+          },
+          "table_data": {
+            "columns": [
+              "mois",
+              "nombre_de_demandes"
+            ],
+            "data": [
+              [
+                "2025-01",
+                1308
+              ],
+              [
+                "2025-02",
+                1191
+              ],
+              [
+                "2025-03",
+                1279
+              ],
+              [
+                "2025-04",
+                1237
+              ],
+              [
+                "2025-05",
+                1234
+              ],
+              [
+                "2025-06",
+                1185
+              ],
+              [
+                "2025-07",
+                748
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "role": "user",
+        "content": "Tendance de satisfaction client au fil du temps",
+        "timestamp": "2025-07-18T15:24:05.751364",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "❌ **Error:** No SQL query to execute\n\n*⏱️ Processed in 7.28 seconds*",
+        "timestamp": "2025-07-18T15:24:13.102403",
+        "attachments": {
+          "csv": {
+            "filename": "query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "path": "exports/query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "size": "0.1 KB"
+          },
+          "chart": {
+            "filename": "chart_20250718_152328.html",
+            "path": "visualizations/chart_20250718_152328.html",
+            "size": "11.4 KB"
+          },
+          "table_data": {
+            "columns": [
+              "mois",
+              "nombre_de_demandes"
+            ],
+            "data": [
+              [
+                "2025-01",
+                1308
+              ],
+              [
+                "2025-02",
+                1191
+              ],
+              [
+                "2025-03",
+                1279
+              ],
+              [
+                "2025-04",
+                1237
+              ],
+              [
+                "2025-05",
+                1234
+              ],
+              [
+                "2025-06",
+                1185
+              ],
+              [
+                "2025-07",
+                748
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "timestamp": "2025-07-18T15:29:31.978232",
+    "user": "wassime"
+  },
+  "33095477-9225-4752-9be9-5700aca62e39": {
+    "title": "Tendance Satisfaction Client",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tendance de satisfaction client au fil du temps",
+        "timestamp": "2025-07-18T15:29:33.797854",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "❌ **Error:** SQL syntax error in the generated query\n\n💡 **Suggestion:** Please rephrase your question or try a simpler request",
+        "timestamp": "2025-07-18T15:29:42.185499",
+        "attachments": {
+          "csv": {
+            "filename": "query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "path": "exports/query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "size": "0.1 KB"
+          },
+          "table_data": {
+            "columns": [
+              "mois",
+              "nombre_de_demandes"
+            ],
+            "data": [
+              [
+                "2025-01",
+                1308
+              ],
+              [
+                "2025-02",
+                1191
+              ],
+              [
+                "2025-03",
+                1279
+              ],
+              [
+                "2025-04",
+                1237
+              ],
+              [
+                "2025-05",
+                1234
+              ],
+              [
+                "2025-06",
+                1185
+              ],
+              [
+                "2025-07",
+                748
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "role": "user",
+        "content": "Temps de traitement moyen par type de service",
+        "timestamp": "2025-07-18T15:30:11.633599",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 9 records across 2 columns\n\n• **type_service:** 9 unique values\n\n• **avg_processing_time:** 9 unique values\n\n• **Range:** From energie to famille\n\n**⚡ Executed Query:**\n\n```sql\nSELECT d.type_service, AVG(d.duree_traitement) AS avg_processing_time\nFROM demandes d\nJOIN conseillers c ON d.conseiller_id = c.id\nWHERE d.date_demande >= NOW() - INTERVAL '30 days'\nGROUP BY d.type_service\nORDER BY avg_processing_time DESC\nLIMIT 10\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "timestamp": "2025-07-18T15:30:16.592255",
+        "attachments": {
+          "csv": {
+            "filename": "query_temps_de_traitement_moyen_par__20250718_153016.csv",
+            "path": "exports/query_temps_de_traitement_moyen_par__20250718_153016.csv",
+            "size": "0.3 KB"
+          },
+          "table_data": {
+            "columns": [
+              "type_service",
+              "avg_processing_time"
+            ],
+            "data": [
+              [
+                "energie",
+                71.25179856115108
+              ],
+              [
+                "acces_droit",
+                70.85714285714286
+              ],
+              [
+                "retraite",
+                68.66141732283465
+              ],
+              [
+                "emploi",
+                67.58955223880596
+              ],
+              [
+                "social",
+                67.44202898550725
+              ],
+              [
+                "services_postaux",
+                67.375
+              ],
+              [
+                "sante",
+                67.2127659574468
+              ],
+              [
+                "logement",
+                63.967320261437905
+              ],
+              [
+                "famille",
+                63.925619834710744
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "role": "user",
+        "content": "Temps de traitement moyen par type de service en pie chart",
+        "timestamp": "2025-07-18T15:30:34.596648",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "❌ **Error:** SQL syntax error in the generated query\n\n💡 **Suggestion:** Please rephrase your question or try a simpler request",
+        "timestamp": "2025-07-18T15:30:41.418768",
+        "attachments": {
+          "csv": {
+            "filename": "query_temps_de_traitement_moyen_par__20250718_153016.csv",
+            "path": "exports/query_temps_de_traitement_moyen_par__20250718_153016.csv",
+            "size": "0.3 KB"
+          },
+          "table_data": {
+            "columns": [
+              "type_service",
+              "avg_processing_time"
+            ],
+            "data": [
+              [
+                "energie",
+                71.25179856115108
+              ],
+              [
+                "acces_droit",
+                70.85714285714286
+              ],
+              [
+                "retraite",
+                68.66141732283465
+              ],
+              [
+                "emploi",
+                67.58955223880596
+              ],
+              [
+                "social",
+                67.44202898550725
+              ],
+              [
+                "services_postaux",
+                67.375
+              ],
+              [
+                "sante",
+                67.2127659574468
+              ],
+              [
+                "logement",
+                63.967320261437905
+              ],
+              [
+                "famille",
+                63.925619834710744
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "timestamp": "2025-07-18T15:34:48.070067",
+    "user": "wassime"
+  },
+  "450035d3-e343-417a-9291-8afb6e2aa92b": {
+    "title": "Chart Request",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Temps de traitement moyen par type de service en pie chart",
+        "timestamp": "2025-07-18T15:34:23.605698",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 9 records across 2 columns\n\n• **type_service:** 9 unique values\n\n• **avg_processing_time:** 9 unique values\n\n• **Range:** From famille to social\n\n**⚡ Executed Query:**\n\n```sql\nSELECT type_service, AVG(duree_traitement) AS avg_processing_time\nFROM demandes\nWHERE date_demande >= NOW() - INTERVAL '30 days'\nGROUP BY type_service\nORDER BY avg_processing_time\nLIMIT 10\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "timestamp": "2025-07-18T15:34:28.866445",
+        "attachments": {
+          "csv": {
+            "filename": "query_temps_de_traitement_moyen_par__20250718_153428.csv",
+            "path": "exports/query_temps_de_traitement_moyen_par__20250718_153428.csv",
+            "size": "0.3 KB"
+          },
+          "table_data": {
+            "columns": [
+              "type_service",
+              "avg_processing_time"
+            ],
+            "data": [
+              [
+                "famille",
+                64.9927536231884
+              ],
+              [
+                "sante",
+                66.19834710743801
+              ],
+              [
+                "logement",
+                66.54330708661418
+              ],
+              [
+                "retraite",
+                68.2063492063492
+              ],
+              [
+                "emploi",
+                68.26119402985074
+              ],
+              [
+                "energie",
+                68.49295774647887
+              ],
+              [
+                "acces_droit",
+                69.65
+              ],
+              [
+                "services_postaux",
+                70.06818181818181
+              ],
+              [
+                "social",
+                71.08391608391608
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "role": "user",
+        "content": "Tendance de satisfaction client au fil du temps",
+        "timestamp": "2025-07-18T15:34:53.717218",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 12 records across 2 columns\n\n• **month:** 12 unique values\n\n• **average_satisfaction:** 12 unique values\n\n• **Range:** From 2024-07 to 2025-06\n\n**⚡ Executed Query:**\n\n```sql\nSELECT TO_CHAR(DATE_TRUNC('month', d.date_demande), 'YYYY-MM') AS month, AVG(d.satisfaction_score) AS average_satisfaction\nFROM demandes d\nJOIN statistiques_mensuelles sm ON d.maison_fs_id = sm.maison_fs_id\nGROUP BY TO_CHAR(DATE_TRUNC('month', d.date_demande), 'YYYY-MM')\nORDER BY month\nLIMIT 12\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "timestamp": "2025-07-18T15:34:59.661107",
+        "attachments": {
+          "csv": {
+            "filename": "query_tendance_de_satisfaction_clien_20250718_153459.csv",
+            "path": "exports/query_tendance_de_satisfaction_clien_20250718_153459.csv",
+            "size": "0.4 KB"
+          },
+          "table_data": {
+            "columns": [
+              "month",
+              "average_satisfaction"
+            ],
+            "data": [
+              [
+                "2024-07",
+                2.963768115942029
+              ],
+              [
+                "2024-08",
+                2.9692058346839545
+              ],
+              [
+                "2024-09",
+                3.0421735604217357
+              ],
+              [
+                "2024-10",
+                2.9929906542056077
+              ],
+              [
+                "2024-11",
+                2.9579554822753504
+              ],
+              [
+                "2024-12",
+                2.9518633540372674
+              ],
+              [
+                "2025-01",
+                3.028191072826938
+              ],
+              [
+                "2025-02",
+                3.0052677787532924
+              ],
+              [
+                "2025-03",
+                2.9798917246713073
+              ],
+              [
+                "2025-04",
+                3.016764459346186
+              ],
+              [
+                "2025-05",
+                2.9616829451540196
+              ],
+              [
+                "2025-06",
+                3.0
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "timestamp": "2025-07-18T15:34:59.661233",
+    "user": "wassime"
   }
 }

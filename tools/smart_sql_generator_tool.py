@@ -1,5 +1,5 @@
 """
-Streamlined Smart SQL Generator - Focused on efficient SQL generation
+Streamlined Smart SQL Generator - PostgreSQL Support
 """
 
 from typing import Dict, Any
@@ -7,20 +7,20 @@ from langchain.tools import BaseTool
 from pydantic import Field
 import logging
 from llm.custom_gpt import CustomGPT
-from config.schemas import TABLE_SCHEMAS
+from config.schemas import TABLE_SCHEMAS, TABLE_RELATIONSHIPS
 
 logger = logging.getLogger(__name__)
 
 class SmartSqlGeneratorTool(BaseTool):
-    """Streamlined SQL generator focused on accurate SQL queries."""
+    """Streamlined SQL generator focused on accurate PostgreSQL queries."""
 
     name: str = "generate_smart_sql"
-    description: str = "Generate optimal SQL queries from intent analysis efficiently."
+    description: str = "Generate optimal PostgreSQL queries from intent analysis efficiently."
 
     llm: CustomGPT = Field(default_factory=CustomGPT)
 
     def _run(self, user_question: str, intent_analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate SQL query from pre-analyzed intent."""
+        """Generate PostgreSQL query from pre-analyzed intent."""
         try:
             # Validate input
             if not intent_analysis:
@@ -42,7 +42,7 @@ class SmartSqlGeneratorTool(BaseTool):
                 'success': True,
                 'sql_query': cleaned_sql,
                 'sql_metadata': metadata,
-                'message': "SQL generated successfully"
+                'message': "PostgreSQL query generated successfully"
             }
 
         except Exception as e:
@@ -64,7 +64,7 @@ class SmartSqlGeneratorTool(BaseTool):
         if not required_tables:
             required_tables = list(TABLE_SCHEMAS.keys())[:2]  # Use first 2 tables as fallback
 
-        context = "# SQL Database Context\n\n"
+        context = "# PostgreSQL Database Context\n\n"
 
         # Only include relevant table schemas
         for table_name in required_tables:
@@ -90,30 +90,43 @@ class SmartSqlGeneratorTool(BaseTool):
                 context += f"- {join['from_table']} JOIN {join['to_table']} ON {join['join_condition']}\n"
             context += "\n"
 
-        # Add SQLite specifics
-        context += """# SQLite Functions:
-- date(column) - Convert to date
-- datetime('now') - Current timestamp  
-- datetime('now', '-X days') - Date arithmetic
+        # Add PostgreSQL specifics
+        context += """# PostgreSQL Functions:
+- DATE_TRUNC('month', column) - Truncate to month
+- TO_CHAR(date_column, 'YYYY-MM') - Format date as YYYY-MM
+- TO_CHAR(date_column, 'YYYY-MM-DD') - Format date as YYYY-MM-DD
+- EXTRACT(YEAR FROM date_column) - Extract year
+- EXTRACT(MONTH FROM date_column) - Extract month
+- NOW() - Current timestamp
+- NOW() - INTERVAL '30 days' - Date arithmetic
+- CURRENT_DATE - Current date only
 - COUNT(*) - Count rows
 - Percentage: (COUNT(*) * 100.0) / (SELECT COUNT(*) FROM table WHERE conditions)
 
+# PostgreSQL Date/Time Examples:
+- Monthly grouping: DATE_TRUNC('month', date_demande)
+- Year filtering: EXTRACT(YEAR FROM date_demande) = 2025
+- Month formatting: TO_CHAR(date_demande, 'YYYY-MM') as month
+- Recent data: WHERE date_demande >= NOW() - INTERVAL '30 days'
+
 # Critical Rules:
-- Use SQLite syntax (not MySQL or PostgreSQL)
+- Use PostgreSQL syntax (NOT SQLite or MySQL)
+- NO strftime() function - use TO_CHAR() or DATE_TRUNC()
 - Always include LIMIT clauses
 - Use proper JOIN syntax
 - Handle NULL values appropriately
+- Use TIMESTAMP/DATE types correctly
 """
 
         return context
 
     def _generate_sql(self, user_question: str, sql_context: str, intent_analysis: Dict[str, Any]) -> str:
-        """Generate SQL with focused prompting."""
+        """Generate PostgreSQL SQL with focused prompting."""
 
         # Build execution instructions
         instructions = self._build_instructions(intent_analysis)
 
-        prompt = f"""Generate SQLite SQL query based on analyzed intent.
+        prompt = f"""Generate ONLY a PostgreSQL SQL query based on analyzed intent.
 
 {sql_context}
 
@@ -122,32 +135,36 @@ class SmartSqlGeneratorTool(BaseTool):
 
 ## User Question: "{user_question}"
 
-## SQLite-Specific Guidelines:
+## PostgreSQL-Specific Guidelines:
 
 ### Common Query Patterns:
-1. **Customer Analysis**: SELECT customers.*, COUNT(orders.order_id) FROM customers LEFT JOIN orders ON customers.customer_id = orders.customer_id GROUP BY customers.customer_id
-2. **Sales Analysis**: SELECT SUM(price * quantity) as total_revenue FROM orders WHERE order_date >= date('now', '-30 days')
-3. **Product Performance**: SELECT product, SUM(quantity) as units_sold FROM orders GROUP BY product ORDER BY units_sold DESC
-4. **Time-based Analysis**: SELECT date(order_date) as order_day, COUNT(*) FROM orders WHERE order_date >= date('now', '-7 days') GROUP BY date(order_date)
+1. **Monthly Trends**: SELECT DATE_TRUNC('month', date_demande) as month, COUNT(*) FROM demandes GROUP BY DATE_TRUNC('month', date_demande) ORDER BY month
+2. **Year Filtering**: WHERE EXTRACT(YEAR FROM date_demande) = 2025
+3. **Recent Data**: WHERE date_demande >= NOW() - INTERVAL '30 days'
+4. **Date Formatting**: TO_CHAR(date_demande, 'YYYY-MM') as formatted_month
 
-### Join Patterns:
-- **Customer Orders**: customers c LEFT JOIN orders o ON c.customer_id = o.customer_id
-- **Order Products**: orders o LEFT JOIN products p ON o.product = p.product_name
-- **Full Analysis**: customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN products p ON o.product = p.product_name
+### IMPORTANT - PostgreSQL Syntax Only:
+- ✅ DATE_TRUNC('month', date_column)
+- ✅ TO_CHAR(date_column, 'YYYY-MM')
+- ✅ EXTRACT(YEAR FROM date_column)
+- ✅ NOW() - INTERVAL '30 days'
+- ❌ NO strftime() - this is SQLite only!
+- ❌ NO date() function - use PostgreSQL functions
 
-### Date Handling:
-- **Recent data**: WHERE order_date >= date('now', '-X days')
-- **Date formatting**: date(order_date) for grouping by day
-- **Date comparisons**: WHERE order_date BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'
+### For Time Series Queries:
+- Use DATE_TRUNC('month', date_demande) for monthly grouping
+- Use TO_CHAR(date_demande, 'YYYY-MM') for month labels
+- Order by the date function used in GROUP BY
 
-Generate ONLY the SQL query - no explanations or markdown.
-Requirements:
-- Use SELECT statements only
-- Follow SQLite syntax exactly
-- Include appropriate LIMIT
-- Use proper JOIN syntax when needed
+CRITICAL INSTRUCTIONS:
+- Return ONLY the SQL query
+- NO explanations, NO markdown, NO code blocks
+- Start directly with SELECT
+- End with semicolon
+- Use PostgreSQL syntax only
+- NEVER use SQLite functions like strftime()
 
-SQL Query:"""
+PostgreSQL Query:"""
 
         try:
             response = self.llm._call(prompt)
@@ -194,60 +211,116 @@ SQL Query:"""
         return "\n".join([f"- {inst}" for inst in instructions])
 
     def _clean_sql(self, sql_query: str) -> str:
-        """Clean and validate SQL."""
-        # Remove markdown
-        if sql_query.startswith('```'):
-            lines = sql_query.split('\n')
-            sql_query = '\n'.join(lines[1:-1]) if len(lines) > 2 else sql_query
+        """Clean and validate SQL - Enhanced version."""
+        original_query = sql_query
 
-        # Clean up
-        sql_query = sql_query.rstrip(';').strip()
+        # Step 1: Remove markdown code blocks
+        if '```' in sql_query:
+            # Split by ``` and find the SQL part
+            parts = sql_query.split('```')
+            for part in parts:
+                part = part.strip()
+                # Skip empty parts and language identifiers
+                if not part or part.lower() in ['sql', 'postgresql', '']:
+                    continue
+                # Look for SELECT statements
+                if 'SELECT' in part.upper():
+                    sql_query = part
+                    break
 
-        # Basic validation
+        # Step 2: Remove language identifiers at the start
+        lines = sql_query.split('\n')
+        cleaned_lines = []
+
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines and language identifiers
+            if not line or line.lower() in ['sql', 'postgresql', 'postgres']:
+                continue
+            # Stop at explanations or markdown
+            if line.startswith('#') or line.lower().startswith('explanation'):
+                break
+            cleaned_lines.append(line)
+
+        sql_query = '\n'.join(cleaned_lines)
+
+        # Step 3: Remove trailing content after semicolon
+        if ';' in sql_query:
+            sql_query = sql_query.split(';')[0] + ';'
+
+        # Step 4: Clean up whitespace
+        sql_query = sql_query.strip().rstrip(';').strip()
+
+        # Step 5: Handle empty or malformed queries
+        if not sql_query:
+            raise ValueError("Generated query is empty after cleaning")
+
+        # Step 6: Basic validation
         sql_upper = sql_query.upper()
         if not sql_upper.startswith('SELECT'):
-            raise ValueError("Query must be a SELECT statement")
+            # Try to find SELECT in the query
+            if 'SELECT' in sql_upper:
+                # Extract from SELECT onwards
+                select_index = sql_upper.find('SELECT')
+                sql_query = sql_query[select_index:]
+                sql_upper = sql_query.upper()
+            else:
+                raise ValueError(f"Query must be a SELECT statement. Got: {sql_query[:100]}...")
 
-        # Check for dangerous keywords
+        # Step 7: Check for dangerous keywords
         dangerous = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE']
         for keyword in dangerous:
             if keyword in sql_upper:
                 raise ValueError(f"Dangerous keyword detected: {keyword}")
 
+        # Step 8: Check for SQLite functions that should be PostgreSQL
+        if 'STRFTIME' in sql_upper:
+            raise ValueError("SQLite strftime() function detected - use PostgreSQL TO_CHAR() or DATE_TRUNC()")
+
+        logger.info(f"Cleaned SQL query: {sql_query}")
         return sql_query
 
     def _extract_metadata(self, sql_query: str) -> Dict[str, Any]:
         """Extract basic metadata from SQL."""
         sql_upper = sql_query.upper()
 
-        # Find tables
-        tables_used = []
-        for table_name in TABLE_SCHEMAS.keys():
-            if table_name.upper() in sql_upper:
-                tables_used.append(table_name)
+        metadata = {
+            'query_type': 'SELECT',
+            'estimated_complexity': 'simple',
+            'tables_used': [],
+            'has_joins': 'JOIN' in sql_upper,
+            'has_aggregation': any(agg in sql_upper for agg in ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX']),
+            'has_time_filter': any(time_func in sql_upper for time_func in ['DATE_TRUNC', 'TO_CHAR', 'EXTRACT', 'NOW()', 'INTERVAL']),
+            'aggregations_used': []
+        }
 
-        # Detect features
-        has_joins = 'JOIN' in sql_upper
-        has_aggregation = any(func in sql_upper for func in ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN'])
-        has_limit = 'LIMIT' in sql_upper
-        has_time_filter = any(func in sql_upper for func in ['DATE', 'DATETIME', 'ORDER_DATE'])
+        # Extract table names (simple heuristic)
+        if 'FROM' in sql_upper:
+            from_part = sql_query.split('FROM')[1].split('WHERE')[0] if 'WHERE' in sql_query else sql_query.split('FROM')[1]
+            for table_name in TABLE_SCHEMAS.keys():
+                if table_name.upper() in from_part.upper():
+                    metadata['tables_used'].append(table_name)
+
+        # Extract aggregations
+        agg_functions = ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX']
+        for agg in agg_functions:
+            if agg in sql_upper:
+                metadata['aggregations_used'].append(agg)
 
         # Estimate complexity
-        complexity_score = len(tables_used) + (2 if has_joins else 0) + (1 if has_aggregation else 0)
-        if complexity_score <= 2:
-            complexity = "simple"
-        elif complexity_score <= 4:
-            complexity = "medium"
-        else:
-            complexity = "complex"
+        complexity_score = 0
+        if metadata['has_joins']:
+            complexity_score += 2
+        if metadata['has_aggregation']:
+            complexity_score += 1
+        if len(metadata['tables_used']) > 1:
+            complexity_score += 1
+        if metadata['has_time_filter']:
+            complexity_score += 1
 
-        return {
-            'query_type': 'SELECT',
-            'tables_used': tables_used,
-            'estimated_complexity': complexity,
-            'has_joins': has_joins,
-            'has_aggregation': has_aggregation,
-            'has_limit': has_limit,
-            'has_time_filter': has_time_filter,
-            'aggregations_used': [func for func in ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN'] if func in sql_upper]
-        }
+        if complexity_score >= 4:
+            metadata['estimated_complexity'] = 'complex'
+        elif complexity_score >= 2:
+            metadata['estimated_complexity'] = 'moderate'
+
+        return metadata
