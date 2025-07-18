@@ -1,0 +1,16 @@
+id,service,sous_service,complexite,volume_mensuel_moyen,duree_moyenne_traitement,taux_resolution,satisfaction_moyenne,formation_requise
+1,emploi,inscription_pole_emploi,simple,499,22,0.88,4.44,avancee
+2,emploi,actualisation_situation,simple,228,60,0.83,4.15,intermediaire
+3,emploi,recherche_formation,moyen,71,98,0.87,3.75,avancee
+4,retraite,simulation_retraite,moyen,331,108,0.81,4.02,intermediaire
+5,retraite,dossier_retraite,complexe,347,77,0.88,4.65,avancee
+6,famille,caf_allocations,moyen,268,61,0.75,4.64,avancee
+7,famille,prime_naissance,simple,174,24,0.85,3.39,base
+8,social,rsa,complexe,144,96,0.91,3.78,intermediaire
+9,social,aide_logement,moyen,141,79,0.76,4.33,intermediaire
+10,sante,carte_vitale,simple,78,100,0.72,3.9,base
+11,sante,remboursement_soins,moyen,184,38,0.77,3.43,base
+12,logement,demande_HLM,complexe,248,81,0.77,3.54,intermediaire
+13,energie,cheque_energie,simple,399,70,0.93,4.3,intermediaire
+14,services_postaux,colis_recommande,simple,458,52,0.89,3.64,intermediaire
+15,acces_droit,aide_juridictionnelle,complexe,473,52,0.83,3.7,avancee
