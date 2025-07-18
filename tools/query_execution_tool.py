@@ -1,21 +1,23 @@
 """
-Query execution tool with generic SQL database support.
+Query execution tool with PostgreSQL database support.
 """
 
 from typing import Dict, Any, List
 from langchain.tools import BaseTool
 import re
 import logging
-from database.connection import generic_db_connection
+
+# Import from new database location
+from src.database.connection import database_connection
 
 logger = logging.getLogger(__name__)
 
 class QueryExecutionTool(BaseTool):
-    """Tool for executing SQL queries safely on generic SQL database."""
+    """Tool for executing SQL queries safely on PostgreSQL database."""
 
     name: str = "execute_query"
     description: str = """
-    Execute SQL queries on generic SQL database safely.
+    Execute SQL queries on PostgreSQL database safely.
     Validates queries, adds safety limits, and returns structured results.
     """
 
@@ -34,7 +36,7 @@ class QueryExecutionTool(BaseTool):
             safe_query = self._add_safety_limits(sql_query)
 
             # Execute the query
-            result = generic_db_connection.execute_query_with_names(safe_query)
+            result = database_connection.execute_query_with_names(safe_query)
 
             # Process results
             processed_result = self._process_results(result)
@@ -66,7 +68,7 @@ class QueryExecutionTool(BaseTool):
         # Check for dangerous operations
         dangerous_keywords = [
             'DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE',
-            'TRUNCATE', 'REPLACE', 'EXEC', 'EXECUTE', 'PRAGMA'
+            'TRUNCATE', 'REPLACE', 'EXEC', 'EXECUTE'
         ]
 
         for keyword in dangerous_keywords:
@@ -84,80 +86,58 @@ class QueryExecutionTool(BaseTool):
     def _add_safety_limits(self, query: str, default_limit: int = 1000) -> str:
         """Add LIMIT clause if not present."""
         query_upper = query.upper()
-        if 'LIMIT' not in query_upper:
-            query = f"{query.rstrip(';')} LIMIT {default_limit}"
-        return query
 
-    def _process_results(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
-        """Process raw query results into structured format."""
-        if not raw_result['data']:
+        # Check if LIMIT already exists
+        if 'LIMIT' in query_upper:
+            return query
+
+        # Add LIMIT clause
+        return f"{query.rstrip(';')} LIMIT {default_limit}"
+
+    def _process_results(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Process and format query results."""
+        if not result.get('data'):
             return {
-                'columns': raw_result['columns'],
+                'columns': result.get('columns', []),
                 'data': [],
-                'formatted_data': [],
                 'row_count': 0,
-                'summary': "No data found"
+                'message': 'Query executed successfully but returned no data'
             }
 
-        # Format data for better readability
-        formatted_data = []
-        for row in raw_result['data']:
-            formatted_row = {}
-            for i, col in enumerate(raw_result['columns']):
-                value = row[i] if i < len(row) else None
-                formatted_row[col] = self._format_value(value)
-            formatted_data.append(formatted_row)
-
         return {
-            'columns': raw_result['columns'],
-            'data': raw_result['data'],
-            'formatted_data': formatted_data,
-            'types': raw_result.get('types', ['TEXT'] * len(raw_result['columns'])),
-            'row_count': len(raw_result['data']),
-            'summary': f"Found {len(raw_result['data'])} rows with {len(raw_result['columns'])} columns"
+            'columns': result.get('columns', []),
+            'data': result.get('data', []),
+            'types': result.get('types', []),
+            'row_count': result.get('row_count', len(result.get('data', []))),
+            'message': f"Retrieved {result.get('row_count', 0)} rows successfully"
         }
 
-    def _format_value(self, value: Any) -> Any:
-        """Format individual values based on their type."""
-        if value is None:
-            return None
+    def _parse_sql_error(self, error_str: str) -> Dict[str, str]:
+        """Parse SQL error and provide user-friendly messages."""
+        error_lower = error_str.lower()
 
-        # Handle different data types
-        if isinstance(value, (int, float)):
-            return value
-        elif isinstance(value, str):
-            return value.strip()
+        if 'syntax error' in error_lower:
+            return {
+                'user_message': 'SQL syntax error in the generated query',
+                'suggestion': 'Please rephrase your question or try a simpler request'
+            }
+        elif 'table' in error_lower and 'does not exist' in error_lower:
+            return {
+                'user_message': 'Referenced table does not exist in the database',
+                'suggestion': 'Ask for available tables first with "list tables" or "show tables"'
+            }
+        elif 'column' in error_lower and 'does not exist' in error_lower:
+            return {
+                'user_message': 'Referenced column does not exist',
+                'suggestion': 'Check the table structure or ask for table schema information'
+            }
+        elif 'connection' in error_lower:
+            return {
+                'user_message': 'Database connection error',
+                'suggestion': 'Please check if the database server is running and accessible'
+            }
         else:
-            return str(value)
-
-    def _parse_sql_error(self, error_msg: str) -> Dict[str, str]:
-        """Parse SQL error messages for user-friendly explanations."""
-        error_info = {
-            'type': 'unknown',
-            'user_message': error_msg,
-            'suggestion': None
-        }
-
-        error_lower = error_msg.lower()
-
-        if "no such table" in error_lower:
-            error_info['type'] = 'table_not_found'
-            error_info['user_message'] = "The specified table was not found"
-            error_info['suggestion'] = "Use 'list tables' to see available tables"
-
-        elif 'no such column' in error_lower or 'no column named' in error_lower:
-            error_info['type'] = 'column_not_found'
-            error_info['user_message'] = "One or more columns don't exist"
-            error_info['suggestion'] = "Check column names in the table schema"
-
-        elif 'syntax error' in error_lower:
-            error_info['type'] = 'syntax_error'
-            error_info['user_message'] = "SQL syntax error"
-            error_info['suggestion'] = "Check your SQL syntax"
-
-        elif 'locked' in error_lower:
-            error_info['type'] = 'database_locked'
-            error_info['user_message'] = "Database is temporarily locked"
-            error_info['suggestion'] = "Please try again in a moment"
-
-        return error_info
+            return {
+                'user_message': 'Database query error occurred',
+                'suggestion': 'Please try rephrasing your question or contact support'
+            }

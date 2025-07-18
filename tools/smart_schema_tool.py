@@ -8,7 +8,7 @@ from pydantic import Field
 import json
 import logging
 from llm.custom_gpt import CustomGPT
-from database.connection import generic_db_connection
+from src.database.connection import database_connection
 from config.schemas import TABLE_SCHEMAS
 
 logger = logging.getLogger(__name__)
@@ -195,11 +195,11 @@ JSON Response:"""
 
         try:
             # Get row count
-            result = generic_db_connection.execute_query_with_names(f"SELECT COUNT(*) FROM {table_name}")
+            result = database_connection.execute_query_with_names(f"SELECT COUNT(*) FROM {table_name}")
             row_count = result['data'][0][0] if result.get('data') else 0
 
             # Get table schema from database
-            db_schema = generic_db_connection.get_table_schema(table_name)
+            db_schema = database_connection.get_table_schema(table_name)
 
             return {
                 'total_rows': row_count,

@@ -1,14 +1,15 @@
 """
 Generic SQL Agent - Main Entry Point
-Clean, efficient LangGraph implementation for generic SQL databases
+Clean, efficient LangGraph implementation for PostgreSQL databases
 """
 
 import sys
 import logging
 from pathlib import Path
 from core.agent import GenericSQLGraphAgent
-from database.connection import generic_db_connection
-from config.settings import DATABASE_CONFIG
+
+# Import from new database location
+from src.database.connection import database_connection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,36 +40,33 @@ def main():
     # Check if database is initialized
     print("🔌 Testing database connection...")
 
-    # Check if database file exists
-    db_path = Path(DATABASE_CONFIG.db_path)
-    if not db_path.exists():
-        print("❌ Database not found!")
-        print("💡 Please initialize the database first:")
-        print("   python database/initialize_db.py")
-        return
-
     try:
-        if generic_db_connection.test_connection():
+        if database_connection.test_connection():
             print("✅ Database connection successful!")
 
             # Show available tables
-            tables = generic_db_connection.list_tables()
+            tables = database_connection.list_tables()
             print(f"📊 Available tables: {tables}")
 
             if not tables:
                 print("⚠️  No tables found in database. Please run initialization script:")
-                print("   python database/initialize_db.py")
+                print("   poetry run init-db")
+                print("   or run: python scripts/init_db.py")
                 return
 
         else:
             print("❌ Database connection failed!")
             print("💡 Please check database configuration and try:")
-            print("   python database/initialize_db.py --reset")
+            print("   1. Make sure PostgreSQL is running")
+            print("   2. Check your .env configuration")
+            print("   3. Run: poetry run init-db")
             return
     except Exception as e:
         print(f"❌ Database connection error: {e}")
-        print("💡 Try reinitializing the database:")
-        print("   python database/initialize_db.py --reset")
+        print("💡 Try initializing the database:")
+        print("   1. Start PostgreSQL server")
+        print("   2. Run: poetry run generate-data")
+        print("   3. Run: poetry run init-db")
         return
 
     print("Type 'exit' to quit, 'help' for assistance")
@@ -95,107 +93,59 @@ def main():
                 show_help()
                 continue
 
-            if user_input.lower() == 'tables':
-                show_tables()
-                continue
-
-            if user_input.lower().startswith('schema '):
-                table_name = user_input[7:].strip()
-                show_table_schema(table_name)
-                continue
-
             if not user_input:
-                print("❌ Please enter a question.")
+                print("⚠️  Please enter a question or 'help' for assistance")
                 continue
 
-            print("\n🔄 Processing your question through LangGraph...")
+            # Process the question through LangGraph
+            print()  # Add spacing
             response = agent.process_question(user_input)
-            print(f"\n{response}\n")
-            print("-" * 80)
+            print(f"\n📋 Response:\n{response}")
+            print()  # Add spacing
 
         except KeyboardInterrupt:
             print("\n👋 Goodbye!")
             break
         except Exception as e:
-            logger.error(f"Error in main loop: {e}")
-            print(f"\n❌ An error occurred: {e}")
-            print("Please try again.\n")
+            logger.error(f"Error processing question: {e}")
+            print(f"❌ Error: {e}")
+            print("💡 Try rephrasing your question or type 'help' for assistance")
+
 
 def show_help():
-    """Show help information."""
-    print("""
-🔮 Generic SQL Agent - Help
+    """Display help information."""
+    help_text = """
+📚 Generic SQL Agent Help
 
-**Available Commands:**
-• `tables` - List all available tables
-• `schema <table_name>` - Show schema for a specific table
-• `help` - Show this help message
-• `exit` - Exit the application
+🎯 Purpose: Ask questions about your data in natural language
 
-**Example Questions:**
-• "Show me all customers"
-• "How many orders do we have?"
-• "What are the top 5 products by price?"
-• "Show me customers from New York"
-• "List all orders with their customer names"
+📋 Example Questions:
+   • "List all tables"
+   • "Show me the first 10 records from demandes table"
+   • "How many requests are there in total?"
+   • "Show me the top 5 France Services offices by number of requests"
+   • "What are the most common types of services requested?"
+   • "Show me statistics for the last month"
 
-**Features:**
-• Natural language to SQL conversion
-• Automatic CSV export of results
-• Interactive visualizations
-• Safe query execution (SELECT only)
-• Smart error handling
+🔧 Commands:
+   • 'help' - Show this help
+   • 'exit' - Quit the program
+   • '--verbose' - Enable detailed workflow output
+   • '--quiet' - Disable detailed output
 
-**Tips:**
-• Be specific about what data you want
-• Use natural language - no SQL knowledge needed
-• Ask for counts, comparisons, or filtered data
-• Results are automatically limited to 1000 rows for safety
-    """)
+💡 Tips:
+   • Be specific about what data you want
+   • Ask for table schemas if you need to understand the structure
+   • The agent will generate and execute SQL queries safely
+   • Results are automatically exported to CSV files when applicable
 
-def show_tables():
-    """Show available tables."""
-    try:
-        tables = generic_db_connection.list_tables()
-        if tables:
-            print("📊 Available Tables:")
-            for table in tables:
-                print(f"  • {table}")
+🗄️ Database Info:
+   • Type: PostgreSQL
+   • Tables: France Services data (offices, users, requests, etc.)
+   • All queries are read-only for safety
+"""
+    print(help_text)
 
-                # Show row count
-                try:
-                    result = generic_db_connection.execute_query_with_names(f"SELECT COUNT(*) FROM {table}")
-                    if result['data']:
-                        count = result['data'][0][0]
-                        print(f"    ({count:,} rows)")
-                except:
-                    print("    (row count unavailable)")
-        else:
-            print("❌ No tables found in database")
-    except Exception as e:
-        print(f"❌ Error listing tables: {e}")
-
-def show_table_schema(table_name: str):
-    """Show schema for a specific table."""
-    try:
-        schema = generic_db_connection.get_table_schema(table_name)
-        if schema:
-            print(f"📋 Schema for table: {table_name}")
-            print(f"Columns:")
-            for col_name, col_info in schema.get('columns', {}).items():
-                col_type = col_info.get('type', 'UNKNOWN')
-                nullable = "NULL" if col_info.get('nullable', True) else "NOT NULL"
-                print(f"  • {col_name} ({col_type}) {nullable}")
-
-                # Show default value if available
-                default = col_info.get('default')
-                if default:
-                    print(f"    Default: {default}")
-        else:
-            print(f"❌ Table '{table_name}' not found")
-            print("💡 Use 'tables' command to see available tables")
-    except Exception as e:
-        print(f"❌ Error getting schema: {e}")
 
 if __name__ == "__main__":
     main()
