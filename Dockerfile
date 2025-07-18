@@ -19,8 +19,17 @@ RUN poetry install --only=main --no-root
 # Copier le code source
 COPY . .
 
-# Exposer le port
-EXPOSE 8000
+# Créer les dossiers nécessaires
+RUN mkdir -p users_data data/charts
 
-# Script de démarrage
-CMD ["python", "run_demo.py"]
+# Exposer le port Streamlit
+EXPOSE 8501
+
+# Configuration Streamlit pour l'environnement containerisé
+ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+ENV STREAMLIT_SERVER_HEADLESS=true
+ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+
+# Script de démarrage Streamlit
+CMD ["poetry", "run", "streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

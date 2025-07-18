@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     container_name: france-services-postgres
     environment:
       POSTGRES_DB: france_services_db
@@ -12,7 +14,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fs_user -d france_services_db"]
@@ -38,7 +39,7 @@ services:
       - ./data:/app/data
       - ./src:/app/src
     ports:
-      - "8001:8000"
+      - "8501:8501"
     restart: unless-stopped
 
 volumes:
