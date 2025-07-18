@@ -15,3 +15,6 @@ visualizations/
 __pycache__/
 .env
 token_usage_reports/
+data/csv/demandes.csv
+data/csv/maisons_france_services.csv
+data/csv/usagers.csv
