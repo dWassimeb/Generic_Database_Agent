@@ -1,0 +1,15 @@
+FROM postgres:15
+
+# Définir les variables d'environnement par défaut
+ENV POSTGRES_DB=france_services_db
+ENV POSTGRES_USER=fs_user
+ENV POSTGRES_PASSWORD=fs_password
+
+# Copier les scripts d'initialisation
+COPY init-scripts/ /docker-entrypoint-initdb.d/
+
+# Exposer le port PostgreSQL
+EXPOSE 5432
+
+# Le script d'entrée par défaut de l'image postgres gérera l'initialisation
+# Les fichiers dans /docker-entrypoint-initdb.d/ seront exécutés automatiquement
