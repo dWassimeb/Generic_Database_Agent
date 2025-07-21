@@ -35,3 +35,5 @@ performance_regions.html
 repartition_services.html
 temps_attente_canal.html
 timeline_incidents.html
+data/charts/
+data/csv/
