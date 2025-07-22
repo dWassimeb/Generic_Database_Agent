@@ -90,18 +90,200 @@ class ModernVisualizationTool(BaseTool):
                 'message': f"Failed to create visualization: {str(e)}"
             }
 
-    def _is_numeric_value(self, value) -> bool:
-        """Check if a value is numeric (including PostgreSQL Decimal)."""
-        return isinstance(value, (int, float, Decimal))
+    # ===== UNIVERSAL NUMERIC TYPE DETECTION =====
 
-    def _to_float(self, value) -> float:
-        """Convert numeric value to float (handles Decimal)."""
+    def _get_numeric_types(self) -> tuple:
+        """Get all possible numeric types from different databases and Python."""
+        base_types = (int, float, Decimal)
+
+        # Try to import additional numeric types that might exist
+        additional_types = []
+
+        try:
+            import numpy as np
+            additional_types.extend([
+                np.int8, np.int16, np.int32, np.int64,
+                np.uint8, np.uint16, np.uint32, np.uint64,
+                np.float16, np.float32, np.float64,
+                np.number  # Generic numpy number
+            ])
+        except ImportError:
+            pass
+
+        try:
+            # ClickHouse types (if available)
+            from clickhouse_driver import types as ch_types
+            # ClickHouse returns various numeric types
+        except ImportError:
+            pass
+
+        return base_types + tuple(additional_types)
+
+    def _is_numeric_value(self, value: Any) -> bool:
+        """Universal numeric value detection - works with ALL database types."""
+        if value is None:
+            return False
+
+        # Check against all known numeric types
+        numeric_types = self._get_numeric_types()
+        if isinstance(value, numeric_types):
+            return True
+
+        # Additional checks for edge cases
+        if hasattr(value, '__float__'):  # Duck typing - can be converted to float
+            try:
+                float(value)
+                return True
+            except (ValueError, TypeError):
+                pass
+
+        # String that represents a number
+        if isinstance(value, str):
+            try:
+                float(value.replace(',', ''))  # Handle comma-separated numbers
+                return True
+            except (ValueError, TypeError):
+                pass
+
+        return False
+
+    def _to_float(self, value: Any) -> float:
+        """Universal numeric conversion - handles ALL database numeric types."""
+        if value is None:
+            return 0.0
+
+        # Direct numeric types
+        if isinstance(value, (int, float)):
+            return float(value)
+
+        # PostgreSQL Decimal
         if isinstance(value, Decimal):
             return float(value)
-        elif isinstance(value, (int, float)):
+
+        # NumPy types
+        if hasattr(value, 'item'):  # NumPy scalar
+            return float(value.item())
+        elif hasattr(value, '__float__'):
             return float(value)
-        else:
+
+        # String conversion
+        if isinstance(value, str):
+            try:
+                # Handle comma-separated numbers
+                cleaned = value.replace(',', '')
+                return float(cleaned)
+            except (ValueError, TypeError):
+                return 0.0
+
+        # Last resort
+        try:
+            return float(value)
+        except:
             return 0.0
+
+    def _debug_data_types(self, data: List[List], max_rows: int = 3) -> None:
+        """Debug helper to show data types - helps diagnose issues."""
+        if not self._should_log_debug():
+            return
+
+        logger.info("=== DATA TYPE DEBUGGING ===")
+        for i, row in enumerate(data[:max_rows]):
+            logger.info(f"Row {i}:")
+            for j, value in enumerate(row):
+                type_name = type(value).__name__
+                is_numeric = self._is_numeric_value(value)
+                converted = self._to_float(value) if is_numeric else 'N/A'
+                logger.info(f"  Col {j}: {value} (type: {type_name}, numeric: {is_numeric}, converted: {converted})")
+        logger.info("=== END DEBUGGING ===")
+
+    # ===== ENHANCED COLUMN ANALYSIS METHODS =====
+
+    def _column_is_numeric(self, column_name: str, columns: List[str], data: List[List]) -> bool:
+        """UNIVERSAL: Check if a column contains primarily numeric data."""
+        try:
+            col_index = columns.index(column_name)
+        except ValueError:
+            logger.warning(f"Column '{column_name}' not found in {columns}")
+            return False
+
+        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
+
+        if not sample_values:
+            return False
+
+        # Use universal numeric detection
+        numeric_count = sum(1 for val in sample_values if self._is_numeric_value(val))
+        is_numeric = numeric_count >= len(sample_values) * 0.8  # 80% threshold
+
+        if self._should_log_debug():
+            logger.info(f"Column '{column_name}': {numeric_count}/{len(sample_values)} numeric values = {is_numeric}")
+
+        return is_numeric
+
+    def _column_is_numeric_by_index(self, col_index: int, data: List[List]) -> bool:
+        """UNIVERSAL: Check if a column contains primarily numeric data by index."""
+        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
+
+        if not sample_values:
+            return False
+
+        # Use universal numeric detection
+        return all(self._is_numeric_value(val) for val in sample_values)
+
+    def _analyze_column_types(self, columns: List[str], data: List[List]) -> Dict[str, str]:
+        """UNIVERSAL: Analyze what type of data each column contains."""
+        column_types = {}
+
+        for i, col in enumerate(columns):
+            sample_values = [row[i] for row in data[:5] if i < len(row) and row[i] is not None]
+
+            if not sample_values:
+                column_types[col] = 'empty'
+            elif all(self._is_numeric_value(val) for val in sample_values):  # FIXED: Universal detection
+                column_types[col] = 'numeric'
+            elif all(isinstance(val, str) for val in sample_values):
+                column_types[col] = 'text'
+            else:
+                column_types[col] = 'mixed'
+
+        if self._should_log_debug():
+            logger.info(f"Column types analysis: {column_types}")
+
+        return column_types
+
+    def _has_sufficient_data_for_visualization(self, query_result: Dict[str, Any]) -> bool:
+        """UNIVERSAL: Check if query result has sufficient data for visualization."""
+        if not query_result.get('success', True):
+            logger.info("Query was not successful")
+            return False
+
+        result_data = query_result.get('result', {})
+        data = result_data.get('data', [])
+        columns = result_data.get('columns', [])
+
+        # Need at least 1 row and 2 columns for meaningful visualization
+        if len(data) < 1 or len(columns) < 2:
+            logger.info(f"Insufficient data: {len(data)} rows, {len(columns)} columns")
+            return False
+
+        # Debug the data types
+        self._debug_data_types(data)
+
+        # Check if we have at least one numeric column using universal detection
+        has_numeric = False
+        numeric_columns = []
+
+        for i, col in enumerate(columns):
+            if self._column_is_numeric_by_index(i, data):
+                has_numeric = True
+                numeric_columns.append(col)
+
+        logger.info(f"Data validation: {len(data)} rows, {len(columns)} columns")
+        logger.info(f"Numeric columns found: {numeric_columns}")
+        logger.info(f"Has numeric data: {has_numeric}")
+
+        return has_numeric
+
 
 
     def _extract_user_chart_preference(self, intent_analysis: Dict[str, Any]) -> Optional[str]:
@@ -299,6 +481,68 @@ class ModernVisualizationTool(BaseTool):
             logger.warning(f"LLM visualization analysis failed: {e}")
             return self._create_intelligent_fallback_analysis(columns, data, user_question)
 
+
+    # ===== ENHANCED DATA ANALYSIS METHODS =====
+
+    def _perform_comprehensive_data_analysis(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
+        """UNIVERSAL: Perform comprehensive analysis of data patterns."""
+        analysis = {
+            'column_types': {},
+            'data_patterns': {},
+            'relationships': {},
+            'distributions': {}
+        }
+
+        for i, col in enumerate(columns):
+            sample_values = [row[i] for row in data[:20] if i < len(row) and row[i] is not None]
+
+            if not sample_values:
+                analysis['column_types'][col] = 'empty'
+                continue
+
+            # FIXED: Universal numeric detection
+            if all(self._is_numeric_value(val) for val in sample_values):
+                analysis['column_types'][col] = 'numeric'
+                # Analyze numeric patterns
+                values = [self._to_float(val) for val in sample_values]
+                analysis['data_patterns'][col] = {
+                    'min': min(values),
+                    'max': max(values),
+                    'range': max(values) - min(values),
+                    'avg': sum(values) / len(values),
+                    'has_large_range': (max(values) - min(values)) > 1000
+                }
+            elif all(isinstance(val, str) for val in sample_values):
+                analysis['column_types'][col] = 'text'
+                # Analyze categorical patterns
+                unique_values = list(set(sample_values))
+                analysis['distributions'][col] = {
+                    'unique_count': len(unique_values),
+                    'total_count': len(sample_values),
+                    'uniqueness_ratio': len(unique_values) / len(sample_values),
+                    'sample_values': unique_values[:5]
+                }
+                # Check if it might be dates
+                if any(self._might_be_date(val) for val in sample_values[:3]):
+                    analysis['column_types'][col] = 'datetime'
+            else:
+                analysis['column_types'][col] = 'mixed'
+
+        # Detect relationships between numeric columns
+        numeric_columns = [col for col, type_ in analysis['column_types'].items() if type_ == 'numeric']
+        if len(numeric_columns) >= 2:
+            analysis['relationships']['has_multiple_numeric'] = True
+            analysis['relationships']['numeric_columns'] = numeric_columns
+
+        return analysis
+
+    def _find_first_numeric_column(self, columns: List[str], data: List[List]) -> Optional[str]:
+        """UNIVERSAL: Find the first column that contains numeric data."""
+        for i, col in enumerate(columns):
+            if self._column_is_numeric_by_index(i, data):
+                return col
+        return None
+
     def _detect_time_series_columns(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
         """ENHANCED: Better detection of time series data with support for datetime objects."""
 
@@ -379,10 +623,6 @@ class ModernVisualizationTool(BaseTool):
 
         return date_like_count >= len(values) * 0.5  # At least 50% look like dates
 
-    def _column_is_numeric_by_index(self, col_index: int, data: List[List]) -> bool:
-        """Check if a column contains primarily numeric data by index."""
-        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
-        return sample_values and all(isinstance(val, (int, float)) for val in sample_values)
 
     def _is_chart_type_compatible(self, chart_type: str, time_info: Dict[str, Any], data_count: int) -> bool:
         """Check if user-requested chart type is compatible with the data."""
@@ -574,9 +814,13 @@ class ModernVisualizationTool(BaseTool):
         else:
             return str(int(num_value))
 
+
+
+    # ===== DATA PREPARATION METHODS =====
+
     def _prepare_standard_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any],
                                label_col: str, value_col: str) -> Dict[str, Any]:
-        """Prepare standard chart data with PostgreSQL Decimal support."""
+        """UNIVERSAL: Prepare standard chart data with universal numeric support."""
 
         chart_type = viz_analysis.get('chart_type', 'bar')
 
@@ -609,11 +853,8 @@ class ModernVisualizationTool(BaseTool):
                 else:
                     label = str(raw_label)
 
-                # Handle value with PostgreSQL Decimal support
-                if raw_value is None:
-                    value = 0.0
-                else:
-                    value = self._to_float(raw_value)  # FIXED: Use helper function
+                # Handle value with UNIVERSAL numeric conversion
+                value = self._to_float(raw_value)
 
                 labels.append(label)
                 values.append(value)
@@ -639,59 +880,6 @@ class ModernVisualizationTool(BaseTool):
             'chart_type': chart_type,
             'is_time_series': False
         }
-
-    def _perform_comprehensive_data_analysis(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
-        """Perform comprehensive analysis of data patterns."""
-
-        analysis = {
-            'column_types': {},
-            'data_patterns': {},
-            'relationships': {},
-            'distributions': {}
-        }
-
-        for i, col in enumerate(columns):
-            sample_values = [row[i] for row in data[:20] if i < len(row) and row[i] is not None]
-
-            if not sample_values:
-                analysis['column_types'][col] = 'empty'
-                continue
-
-            # Determine column type
-            if all(isinstance(val, (int, float)) for val in sample_values):
-                analysis['column_types'][col] = 'numeric'
-                # Analyze numeric patterns
-                values = [float(val) for val in sample_values]
-                analysis['data_patterns'][col] = {
-                    'min': min(values),
-                    'max': max(values),
-                    'range': max(values) - min(values),
-                    'avg': sum(values) / len(values),
-                    'has_large_range': (max(values) - min(values)) > 1000
-                }
-            elif all(isinstance(val, str) for val in sample_values):
-                analysis['column_types'][col] = 'text'
-                # Analyze categorical patterns
-                unique_values = list(set(sample_values))
-                analysis['distributions'][col] = {
-                    'unique_count': len(unique_values),
-                    'total_count': len(sample_values),
-                    'uniqueness_ratio': len(unique_values) / len(sample_values),
-                    'sample_values': unique_values[:5]
-                }
-                # Check if it might be dates
-                if any(self._might_be_date(val) for val in sample_values[:3]):
-                    analysis['column_types'][col] = 'datetime'
-            else:
-                analysis['column_types'][col] = 'mixed'
-
-        # Detect relationships between numeric columns
-        numeric_columns = [col for col, type_ in analysis['column_types'].items() if type_ == 'numeric']
-        if len(numeric_columns) >= 2:
-            analysis['relationships']['has_multiple_numeric'] = True
-            analysis['relationships']['numeric_columns'] = numeric_columns
-
-        return analysis
 
     def _analyze_question_context(self, user_question: str) -> Dict[str, Any]:
         """Analyze question for visualization hints."""
@@ -825,17 +1013,6 @@ class ModernVisualizationTool(BaseTool):
         sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
         return sample_values and all(isinstance(val, str) for val in sample_values)
 
-    def _column_is_numeric(self, column_name: str, columns: List[str], data: List[List]) -> bool:
-        """Check if a column contains primarily numeric data (PostgreSQL compatible)."""
-        try:
-            col_index = columns.index(column_name)
-        except ValueError:
-            return False
-
-        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
-
-        # FIXED: Include Decimal type for PostgreSQL compatibility
-        return sample_values and all(self._is_numeric_value(val) for val in sample_values)
 
     def _might_be_date(self, value: str) -> bool:
         """Check if a string value might be a date."""
@@ -848,6 +1025,7 @@ class ModernVisualizationTool(BaseTool):
             r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
             r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
             r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
+            r'\d{4}-\d{2}',        # YYYY-MM (month format)
         ]
 
         return any(re.search(pattern, value) for pattern in date_patterns)
@@ -869,38 +1047,6 @@ class ModernVisualizationTool(BaseTool):
                 column_types[col] = 'mixed'
 
         return column_types
-
-    def _has_sufficient_data_for_visualization(self, query_result: Dict[str, Any]) -> bool:
-        """Check if query result has sufficient data for visualization (PostgreSQL compatible)."""
-        if not query_result.get('success', True):
-            return False
-
-        result_data = query_result.get('result', {})
-        data = result_data.get('data', [])
-        columns = result_data.get('columns', [])
-
-        # Need at least 1 row and 2 columns for meaningful visualization
-        if len(data) < 1 or len(columns) < 2:
-            return False
-
-        # Check if we have at least one numeric column (including Decimal)
-        has_numeric = False
-        for row in data[:5]:  # Check first 5 rows
-            for value in row:
-                if self._is_numeric_value(value) and not (isinstance(value, float) and (value != value)):  # Check for NaN
-                    has_numeric = True
-                    break
-            if has_numeric:
-                break
-
-        logger.info(f"Data validation: {len(data)} rows, {len(columns)} columns, has_numeric: {has_numeric}")
-        if not has_numeric:
-            # Debug: show sample data types
-            sample_row = data[0] if data else []
-            sample_types = [type(val).__name__ for val in sample_row]
-            logger.info(f"Sample data types: {sample_types}")
-
-        return has_numeric
 
     def _create_professional_visualization(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any], user_question: str) -> str:
         """Create the professional HTML visualization file with safe UTF-8 handling."""
@@ -1626,14 +1772,6 @@ class ModernVisualizationTool(BaseTool):
             "show_legend": chart_type in ['pie', 'doughnut', 'line'],
             "reasoning": f"Intelligent fallback: {reasoning}"
         }
-
-    def _find_first_numeric_column(self, columns: List[str], data: List[List]) -> Optional[str]:
-        """Find the first column that contains numeric data."""
-        for i, col in enumerate(columns):
-            sample_values = [row[i] for row in data[:5] if i < len(row) and row[i] is not None]
-            if sample_values and all(isinstance(val, (int, float)) for val in sample_values):
-                return col
-        return None
 
     def _inject_callback_functions(self, config_json: str, chart_type: str) -> str:
         """Inject JavaScript callback functions into the JSON configuration."""
