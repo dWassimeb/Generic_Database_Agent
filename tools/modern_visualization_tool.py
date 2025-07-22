@@ -1,7 +1,7 @@
 """
-CLEANED Modern Visualization Tool - Intelligent Date/Time Formatting
-Removed redundant methods, kept only the enhanced versions
-Based on latest GitHub repo version
+FIXED & RESTRUCTURED Modern Visualization Tool - Comprehensive Database Support
+Fixed numeric detection issue and reorganized by theme and utility
+Removed duplicate methods and kept the most performant versions
 """
 
 from typing import Dict, Any, List, Optional
@@ -11,7 +11,7 @@ import json
 import os
 import logging
 from datetime import datetime, date
-from decimal import Decimal  # Import Decimal for PostgreSQL support
+from decimal import Decimal
 from llm.custom_gpt import CustomGPT
 import unicodedata
 import re
@@ -34,6 +34,10 @@ class ModernVisualizationTool(BaseTool):
         super().__init__(**kwargs)
         # Create visualizations directory if it doesn't exist
         os.makedirs(self.export_dir, exist_ok=True)
+
+    # ========================================
+    # MAIN ENTRY POINT
+    # ========================================
 
     def _run(self, query_result: Dict[str, Any], user_question: str = "", csv_result: Dict[str, Any] = None,
              intent_analysis: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -90,7 +94,9 @@ class ModernVisualizationTool(BaseTool):
                 'message': f"Failed to create visualization: {str(e)}"
             }
 
-    # ===== UNIVERSAL NUMERIC TYPE DETECTION =====
+    # ========================================
+    # UNIVERSAL NUMERIC TYPE DETECTION
+    # ========================================
 
     def _get_numeric_types(self) -> tuple:
         """Get all possible numeric types from different databases and Python."""
@@ -181,78 +187,12 @@ class ModernVisualizationTool(BaseTool):
         except:
             return 0.0
 
-    def _debug_data_types(self, data: List[List], max_rows: int = 3) -> None:
-        """Debug helper to show data types - helps diagnose issues."""
-        if not self._should_log_debug():
-            return
+    # ========================================
+    # DATA VALIDATION & ANALYSIS
+    # ========================================
 
-        logger.info("=== DATA TYPE DEBUGGING ===")
-        for i, row in enumerate(data[:max_rows]):
-            logger.info(f"Row {i}:")
-            for j, value in enumerate(row):
-                type_name = type(value).__name__
-                is_numeric = self._is_numeric_value(value)
-                converted = self._to_float(value) if is_numeric else 'N/A'
-                logger.info(f"  Col {j}: {value} (type: {type_name}, numeric: {is_numeric}, converted: {converted})")
-        logger.info("=== END DEBUGGING ===")
-
-    # ===== ENHANCED COLUMN ANALYSIS METHODS =====
-
-    def _column_is_numeric(self, column_name: str, columns: List[str], data: List[List]) -> bool:
-        """UNIVERSAL: Check if a column contains primarily numeric data."""
-        try:
-            col_index = columns.index(column_name)
-        except ValueError:
-            logger.warning(f"Column '{column_name}' not found in {columns}")
-            return False
-
-        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
-
-        if not sample_values:
-            return False
-
-        # Use universal numeric detection
-        numeric_count = sum(1 for val in sample_values if self._is_numeric_value(val))
-        is_numeric = numeric_count >= len(sample_values) * 0.8  # 80% threshold
-
-        if self._should_log_debug():
-            logger.info(f"Column '{column_name}': {numeric_count}/{len(sample_values)} numeric values = {is_numeric}")
-
-        return is_numeric
-
-    def _column_is_numeric_by_index(self, col_index: int, data: List[List]) -> bool:
-        """UNIVERSAL: Check if a column contains primarily numeric data by index."""
-        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
-
-        if not sample_values:
-            return False
-
-        # Use universal numeric detection
-        return all(self._is_numeric_value(val) for val in sample_values)
-
-    def _analyze_column_types(self, columns: List[str], data: List[List]) -> Dict[str, str]:
-        """UNIVERSAL: Analyze what type of data each column contains."""
-        column_types = {}
-
-        for i, col in enumerate(columns):
-            sample_values = [row[i] for row in data[:5] if i < len(row) and row[i] is not None]
-
-            if not sample_values:
-                column_types[col] = 'empty'
-            elif all(self._is_numeric_value(val) for val in sample_values):  # FIXED: Universal detection
-                column_types[col] = 'numeric'
-            elif all(isinstance(val, str) for val in sample_values):
-                column_types[col] = 'text'
-            else:
-                column_types[col] = 'mixed'
-
-        if self._should_log_debug():
-            logger.info(f"Column types analysis: {column_types}")
-
-        return column_types
-
-    def _has_sufficient_data_for_visualization(self, query_result: Dict[str, Any]) -> bool:
-        """UNIVERSAL: Check if query result has sufficient data for visualization."""
+    def _is_visualizable(self, query_result: Dict[str, Any]) -> bool:
+        """FIXED: Check if query results are suitable for visualization using universal numeric detection."""
         if not query_result.get('success', True):
             logger.info("Query was not successful")
             return False
@@ -269,7 +209,7 @@ class ModernVisualizationTool(BaseTool):
         # Debug the data types
         self._debug_data_types(data)
 
-        # Check if we have at least one numeric column using universal detection
+        # FIXED: Use universal numeric detection instead of basic isinstance check
         has_numeric = False
         numeric_columns = []
 
@@ -284,24 +224,214 @@ class ModernVisualizationTool(BaseTool):
 
         return has_numeric
 
+    def _column_is_numeric_by_index(self, col_index: int, data: List[List]) -> bool:
+        """UNIVERSAL: Check if a column contains primarily numeric data by index."""
+        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
 
+        if not sample_values:
+            return False
 
-    def _extract_user_chart_preference(self, intent_analysis: Dict[str, Any]) -> Optional[str]:
-        """Extract user's chart type preference from intent analysis."""
-        if not intent_analysis:
-            return None
+        # Use universal numeric detection with threshold
+        numeric_count = sum(1 for val in sample_values if self._is_numeric_value(val))
+        is_numeric = numeric_count >= len(sample_values) * 0.8  # 80% threshold
 
-        viz_prefs = intent_analysis.get('visualization_preferences', {})
-        user_requested = viz_prefs.get('user_requested_chart_type')
-        confidence = viz_prefs.get('chart_type_confidence', 0.0)
+        if self._should_log_debug():
+            logger.info(f"Column {col_index}: {numeric_count}/{len(sample_values)} numeric values = {is_numeric}")
 
-        # Only use user preference if confidence is high enough
-        if user_requested and user_requested != 'auto' and confidence >= 0.7:
-            if self._should_log_debug():
-                logger.info(f"User requested chart type: {user_requested} (confidence: {confidence})")
-            return user_requested
+        return is_numeric
 
+    def _column_is_numeric(self, column_name: str, columns: List[str], data: List[List]) -> bool:
+        """UNIVERSAL: Check if a column contains primarily numeric data."""
+        try:
+            col_index = columns.index(column_name)
+            return self._column_is_numeric_by_index(col_index, data)
+        except ValueError:
+            logger.warning(f"Column '{column_name}' not found in {columns}")
+            return False
+
+    def _analyze_column_types(self, columns: List[str], data: List[List]) -> Dict[str, str]:
+        """UNIVERSAL: Analyze what type of data each column contains."""
+        column_types = {}
+
+        for i, col in enumerate(columns):
+            sample_values = [row[i] for row in data[:20] if i < len(row) and row[i] is not None]
+
+            if not sample_values:
+                column_types[col] = 'empty'
+            elif all(self._is_numeric_value(val) for val in sample_values):
+                column_types[col] = 'numeric'
+            elif all(isinstance(val, str) for val in sample_values):
+                column_types[col] = 'text'
+            else:
+                column_types[col] = 'mixed'
+
+        if self._should_log_debug():
+            logger.info(f"Column types analysis: {column_types}")
+
+        return column_types
+
+    def _perform_comprehensive_data_analysis(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
+        """UNIVERSAL: Perform comprehensive analysis of data patterns."""
+        analysis = {
+            'column_types': {},
+            'data_patterns': {},
+            'relationships': {},
+            'distributions': {}
+        }
+
+        for i, col in enumerate(columns):
+            sample_values = [row[i] for row in data[:20] if i < len(row) and row[i] is not None]
+
+            if not sample_values:
+                analysis['column_types'][col] = 'empty'
+                continue
+
+            # FIXED: Universal numeric detection
+            if all(self._is_numeric_value(val) for val in sample_values):
+                analysis['column_types'][col] = 'numeric'
+                # Analyze numeric patterns
+                values = [self._to_float(val) for val in sample_values]
+                analysis['data_patterns'][col] = {
+                    'min': min(values),
+                    'max': max(values),
+                    'range': max(values) - min(values),
+                    'avg': sum(values) / len(values),
+                    'has_large_range': (max(values) - min(values)) > 1000
+                }
+            elif all(isinstance(val, str) for val in sample_values):
+                analysis['column_types'][col] = 'text'
+                # Analyze categorical patterns
+                unique_values = list(set(sample_values))
+                analysis['distributions'][col] = {
+                    'unique_count': len(unique_values),
+                    'total_count': len(sample_values),
+                    'uniqueness_ratio': len(unique_values) / len(sample_values),
+                    'sample_values': unique_values[:5]
+                }
+                # Check if it might be dates
+                if any(self._might_be_date(val) for val in sample_values[:3]):
+                    analysis['column_types'][col] = 'datetime'
+            else:
+                analysis['column_types'][col] = 'mixed'
+
+        # Detect relationships between numeric columns
+        numeric_columns = [col for col, type_ in analysis['column_types'].items() if type_ == 'numeric']
+        if len(numeric_columns) >= 2:
+            analysis['relationships']['has_multiple_numeric'] = True
+            analysis['relationships']['numeric_columns'] = numeric_columns
+
+        return analysis
+
+    def _find_first_numeric_column(self, columns: List[str], data: List[List]) -> Optional[str]:
+        """UNIVERSAL: Find the first column that contains numeric data."""
+        for i, col in enumerate(columns):
+            if self._column_is_numeric_by_index(i, data):
+                return col
         return None
+
+    # ========================================
+    # TIME SERIES DETECTION
+    # ========================================
+
+    def _detect_time_series_columns(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
+        """ENHANCED: Better detection of time series data with support for datetime objects."""
+
+        time_info = {
+            'is_time_series': False,
+            'date_column': None,
+            'datetime_column': None,
+            'value_column': None,
+            'time_format': 'unknown',
+            'sample_dates': []
+        }
+
+        # Check each column for time-related data
+        for i, col in enumerate(columns):
+            col_lower = col.lower()
+            sample_values = [row[i] for row in data[:5] if i < len(row) and row[i] is not None]
+
+            if not sample_values:
+                continue
+
+            # Check if column contains datetime objects or date objects
+            if any(isinstance(val, (datetime, date)) for val in sample_values):
+                if any(isinstance(val, datetime) for val in sample_values):
+                    time_info['datetime_column'] = {'name': col, 'index': i}
+                    time_info['time_format'] = 'datetime_object'
+                elif any(isinstance(val, date) for val in sample_values):
+                    time_info['date_column'] = {'name': col, 'index': i}
+                    time_info['time_format'] = 'date_object'
+
+                time_info['sample_dates'] = sample_values[:3]
+
+            # Check column names for time-related patterns
+            elif any(keyword in col_lower for keyword in ['date', 'time', 'day', 'month', 'year']):
+                # Check if values look like dates
+                if self._values_look_like_dates(sample_values):
+                    time_info['date_column'] = {'name': col, 'index': i}
+                    time_info['time_format'] = 'string_date'
+                    time_info['sample_dates'] = sample_values[:3]
+
+            # Check for value columns
+            elif any(val_word in col_lower for val_word in ['count', 'amount', 'volume', 'total', 'sum', 'ticket']):
+                if self._column_is_numeric_by_index(i, data):
+                    time_info['value_column'] = {'name': col, 'index': i}
+
+        # Determine if this is time series
+        has_time_component = (time_info['date_column'] or time_info['datetime_column'])
+        has_value_component = time_info['value_column'] or any(
+            self._column_is_numeric_by_index(i, data) for i in range(len(columns))
+        )
+
+        time_info['is_time_series'] = has_time_component and has_value_component
+
+        if self._should_log_debug():
+            logger.info(f"Enhanced time series detection: {time_info}")
+
+        return time_info
+
+    def _values_look_like_dates(self, values: List[Any]) -> bool:
+        """Check if string values look like dates."""
+        if not values:
+            return False
+
+        # Check if most values match common date patterns
+        date_patterns = [
+            r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
+            r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
+            r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
+            r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
+        ]
+
+        date_like_count = 0
+        for value in values:
+            if isinstance(value, str):
+                for pattern in date_patterns:
+                    if re.search(pattern, value):
+                        date_like_count += 1
+                        break
+
+        return date_like_count >= len(values) * 0.5  # At least 50% look like dates
+
+    def _might_be_date(self, value: str) -> bool:
+        """Check if a string value might be a date."""
+        if not isinstance(value, str):
+            return False
+
+        # Simple date pattern detection
+        date_patterns = [
+            r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
+            r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
+            r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
+            r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
+            r'\d{4}-\d{2}',        # YYYY-MM (month format)
+        ]
+
+        return any(re.search(pattern, value) for pattern in date_patterns)
+
+    # ========================================
+    # DATA CLEANING & PREPARATION
+    # ========================================
 
     def _clean_data_utf8(self, data: List[List]) -> List[List]:
         """Clean data to handle UTF-8 encoding issues."""
@@ -339,30 +469,9 @@ class ModernVisualizationTool(BaseTool):
             # Last resort: convert to ASCII
             return text.encode('ascii', 'ignore').decode('ascii')
 
-    def _is_visualizable(self, query_result: Dict[str, Any]) -> bool:
-        """Check if query results are suitable for visualization."""
-        if not query_result.get('success', True):
-            return False
-
-        result_data = query_result.get('result', {})
-        data = result_data.get('data', [])
-        columns = result_data.get('columns', [])
-
-        # Need at least 1 row and 2 columns for meaningful visualization
-        if len(data) < 1 or len(columns) < 2:
-            return False
-
-        # Check if we have at least one numeric column
-        has_numeric = False
-        for row in data[:5]:  # Check first 5 rows
-            for value in row:
-                if isinstance(value, (int, float)) and not (isinstance(value, float) and (value != value)):  # Check for NaN
-                    has_numeric = True
-                    break
-            if has_numeric:
-                break
-
-        return has_numeric
+    # ========================================
+    # CHART ANALYSIS & CONFIGURATION
+    # ========================================
 
     def _analyze_data_for_visualization(self, columns: List[str], data: List[List], user_question: str,
                                        user_chart_preference: Optional[str] = None) -> Dict[str, Any]:
@@ -479,150 +588,41 @@ class ModernVisualizationTool(BaseTool):
 
         except Exception as e:
             logger.warning(f"LLM visualization analysis failed: {e}")
-            return self._create_intelligent_fallback_analysis(columns, data, user_question)
+            return self._create_intelligent_fallback_analysis(columns, data, user_question, time_info)
 
+    def _analyze_question_context(self, user_question: str) -> Dict[str, Any]:
+        """Analyze question for visualization hints."""
 
-    # ===== ENHANCED DATA ANALYSIS METHODS =====
+        question_lower = user_question.lower()
 
-    def _perform_comprehensive_data_analysis(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
-        """UNIVERSAL: Perform comprehensive analysis of data patterns."""
-        analysis = {
-            'column_types': {},
-            'data_patterns': {},
-            'relationships': {},
-            'distributions': {}
+        context = {
+            'asks_for_distribution': any(word in question_lower for word in ['distribution', 'breakdown', 'percentage', 'proportion', 'share']),
+            'asks_for_ranking': any(word in question_lower for word in ['top', 'bottom', 'ranking', 'highest', 'lowest', 'best', 'worst']),
+            'asks_for_trend': any(word in question_lower for word in ['trend', 'over time', 'timeline', 'progression', 'evolution', 'évolution', 'journalière']),
+            'asks_for_comparison': any(word in question_lower for word in ['compare', 'comparison', 'versus', 'vs', 'between']),
+            'asks_for_correlation': any(word in question_lower for word in ['correlation', 'relationship', 'related', 'depends on']),
+            'mentions_time': any(word in question_lower for word in ['time', 'date', 'month', 'year', 'day', 'hour', 'period', 'journalière', 'daily']),
+            'has_specific_count': any(word in question_lower for word in ['top 5', 'top 10', 'first 20', 'last 15'])
         }
 
-        for i, col in enumerate(columns):
-            sample_values = [row[i] for row in data[:20] if i < len(row) and row[i] is not None]
+        return context
 
-            if not sample_values:
-                analysis['column_types'][col] = 'empty'
-                continue
+    def _extract_user_chart_preference(self, intent_analysis: Dict[str, Any]) -> Optional[str]:
+        """Extract user's chart type preference from intent analysis."""
+        if not intent_analysis:
+            return None
 
-            # FIXED: Universal numeric detection
-            if all(self._is_numeric_value(val) for val in sample_values):
-                analysis['column_types'][col] = 'numeric'
-                # Analyze numeric patterns
-                values = [self._to_float(val) for val in sample_values]
-                analysis['data_patterns'][col] = {
-                    'min': min(values),
-                    'max': max(values),
-                    'range': max(values) - min(values),
-                    'avg': sum(values) / len(values),
-                    'has_large_range': (max(values) - min(values)) > 1000
-                }
-            elif all(isinstance(val, str) for val in sample_values):
-                analysis['column_types'][col] = 'text'
-                # Analyze categorical patterns
-                unique_values = list(set(sample_values))
-                analysis['distributions'][col] = {
-                    'unique_count': len(unique_values),
-                    'total_count': len(sample_values),
-                    'uniqueness_ratio': len(unique_values) / len(sample_values),
-                    'sample_values': unique_values[:5]
-                }
-                # Check if it might be dates
-                if any(self._might_be_date(val) for val in sample_values[:3]):
-                    analysis['column_types'][col] = 'datetime'
-            else:
-                analysis['column_types'][col] = 'mixed'
+        viz_prefs = intent_analysis.get('visualization_preferences', {})
+        user_requested = viz_prefs.get('user_requested_chart_type')
+        confidence = viz_prefs.get('chart_type_confidence', 0.0)
 
-        # Detect relationships between numeric columns
-        numeric_columns = [col for col, type_ in analysis['column_types'].items() if type_ == 'numeric']
-        if len(numeric_columns) >= 2:
-            analysis['relationships']['has_multiple_numeric'] = True
-            analysis['relationships']['numeric_columns'] = numeric_columns
+        # Only use user preference if confidence is high enough
+        if user_requested and user_requested != 'auto' and confidence >= 0.7:
+            if self._should_log_debug():
+                logger.info(f"User requested chart type: {user_requested} (confidence: {confidence})")
+            return user_requested
 
-        return analysis
-
-    def _find_first_numeric_column(self, columns: List[str], data: List[List]) -> Optional[str]:
-        """UNIVERSAL: Find the first column that contains numeric data."""
-        for i, col in enumerate(columns):
-            if self._column_is_numeric_by_index(i, data):
-                return col
         return None
-
-    def _detect_time_series_columns(self, columns: List[str], data: List[List]) -> Dict[str, Any]:
-        """ENHANCED: Better detection of time series data with support for datetime objects."""
-
-        time_info = {
-            'is_time_series': False,
-            'date_column': None,
-            'datetime_column': None,
-            'value_column': None,
-            'time_format': 'unknown',
-            'sample_dates': []
-        }
-
-        # Check each column for time-related data
-        for i, col in enumerate(columns):
-            col_lower = col.lower()
-            sample_values = [row[i] for row in data[:5] if i < len(row) and row[i] is not None]
-
-            if not sample_values:
-                continue
-
-            # Check if column contains datetime objects or date objects
-            if any(isinstance(val, (datetime, date)) for val in sample_values):
-                if any(isinstance(val, datetime) for val in sample_values):
-                    time_info['datetime_column'] = {'name': col, 'index': i}
-                    time_info['time_format'] = 'datetime_object'
-                elif any(isinstance(val, date) for val in sample_values):
-                    time_info['date_column'] = {'name': col, 'index': i}
-                    time_info['time_format'] = 'date_object'
-
-                time_info['sample_dates'] = sample_values[:3]
-
-            # Check column names for time-related patterns
-            elif any(keyword in col_lower for keyword in ['date', 'time', 'day', 'month', 'year']):
-                # Check if values look like dates
-                if self._values_look_like_dates(sample_values):
-                    time_info['date_column'] = {'name': col, 'index': i}
-                    time_info['time_format'] = 'string_date'
-                    time_info['sample_dates'] = sample_values[:3]
-
-            # Check for value columns
-            elif any(val_word in col_lower for val_word in ['count', 'amount', 'volume', 'total', 'sum', 'ticket']):
-                if self._column_is_numeric_by_index(i, data):
-                    time_info['value_column'] = {'name': col, 'index': i}
-
-        # Determine if this is time series
-        has_time_component = (time_info['date_column'] or time_info['datetime_column'])
-        has_value_component = time_info['value_column'] or any(
-            self._column_is_numeric_by_index(i, data) for i in range(len(columns))
-        )
-
-        time_info['is_time_series'] = has_time_component and has_value_component
-
-        if self._should_log_debug():
-            logger.info(f"Enhanced time series detection: {time_info}")
-
-        return time_info
-
-    def _values_look_like_dates(self, values: List[Any]) -> bool:
-        """Check if string values look like dates."""
-        if not values:
-            return False
-
-        # Check if most values match common date patterns
-        date_patterns = [
-            r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
-            r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
-            r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
-            r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
-        ]
-
-        date_like_count = 0
-        for value in values:
-            if isinstance(value, str):
-                for pattern in date_patterns:
-                    if re.search(pattern, value):
-                        date_like_count += 1
-                        break
-
-        return date_like_count >= len(values) * 0.5  # At least 50% look like dates
-
 
     def _is_chart_type_compatible(self, chart_type: str, time_info: Dict[str, Any], data_count: int) -> bool:
         """Check if user-requested chart type is compatible with the data."""
@@ -637,6 +637,125 @@ class ModernVisualizationTool(BaseTool):
 
         # Otherwise, most chart types are flexible
         return True
+
+    def _validate_and_enhance_chart_analysis(self, parsed: Dict[str, Any], columns: List[str], data: List[List], user_question: str) -> Dict[str, Any]:
+        """Validate and enhance the LLM's chart analysis."""
+
+        chart_type = parsed.get('chart_type', 'bar')
+
+        # Validate chart type
+        valid_types = ['bar', 'horizontal_bar', 'line', 'area', 'pie', 'doughnut', 'scatter', 'bubble', 'radar', 'polar']
+        if chart_type not in valid_types:
+            chart_type = 'bar'
+            parsed['chart_type'] = chart_type
+
+        # Validate column assignments
+        label_col = parsed.get('label_column', '')
+        value_col = parsed.get('value_column', '')
+
+        # Ensure columns exist
+        if label_col not in columns:
+            # Find first text column or use first column
+            text_cols = [col for col in columns if not self._column_is_numeric(col, columns, data)]
+            parsed['label_column'] = text_cols[0] if text_cols else columns[0]
+
+        if value_col not in columns:
+            # Find first numeric column or use last column
+            numeric_cols = [col for col in columns if self._column_is_numeric(col, columns, data)]
+            parsed['value_column'] = numeric_cols[0] if numeric_cols else columns[-1]
+
+        # Add intelligent defaults based on chart type
+        if chart_type in ['pie', 'doughnut']:
+            parsed['show_legend'] = True
+            parsed['chart_specific_options'] = parsed.get('chart_specific_options', {})
+            parsed['chart_specific_options']['show_data_labels'] = True
+
+        elif chart_type in ['line', 'area']:
+            parsed['chart_specific_options'] = parsed.get('chart_specific_options', {})
+            parsed['chart_specific_options']['enable_zoom'] = True
+
+        elif chart_type in ['scatter', 'bubble']:
+            parsed['chart_specific_options'] = parsed.get('chart_specific_options', {})
+            parsed['chart_specific_options']['show_correlation'] = True
+
+        # Ensure we have a reasoning
+        if not parsed.get('reasoning'):
+            parsed['reasoning'] = f"Selected {chart_type} chart based on data structure and question context"
+
+        return parsed
+
+    def _create_intelligent_fallback_analysis(self, columns: List[str], data: List[List], user_question: str, time_info: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Create intelligent fallback when LLM fails."""
+
+        # If it's time series data, force line chart
+        if time_info and time_info['is_time_series']:
+            chart_type = 'line'
+            reasoning = "Time series data detected - using line chart"
+
+            # Determine columns
+            if time_info.get('datetime_column'):
+                label_column = time_info['datetime_column']['name']
+            elif time_info.get('date_column'):
+                label_column = time_info['date_column']['name']
+            else:
+                label_column = columns[0]
+
+            if time_info.get('value_column'):
+                value_column = time_info['value_column']['name']
+            else:
+                # Find first numeric column that's not a time column
+                value_column = None
+                time_columns = [
+                    time_info.get('datetime_column', {}).get('name'),
+                    time_info.get('date_column', {}).get('name')
+                ]
+
+                for col in columns:
+                    if col not in time_columns and self._column_is_numeric(col, columns, data):
+                        value_column = col
+                        break
+
+                if not value_column:
+                    value_column = columns[-1] if columns else 'Value'
+
+        else:
+            # Use standard fallback logic
+            column_types = self._analyze_column_types(columns, data)
+            question_context = self._analyze_question_context(user_question)
+
+            text_columns = [col for col, type_ in column_types.items() if type_ == 'text']
+            numeric_columns = [col for col, type_ in column_types.items() if type_ == 'numeric']
+
+            # Chart type selection
+            if question_context['asks_for_ranking'] or 'top' in user_question.lower():
+                chart_type = 'horizontal_bar'
+                reasoning = "Horizontal bar chart for ranking analysis"
+            elif question_context['asks_for_distribution'] and len(text_columns) == 1 and len(data) <= 8:
+                chart_type = 'pie'
+                reasoning = "Pie chart for small distribution"
+            elif len(data) > 15:
+                chart_type = 'horizontal_bar'
+                reasoning = "Horizontal bar chart for many categories"
+            else:
+                chart_type = 'bar'
+                reasoning = "Default bar chart"
+
+            label_column = text_columns[0] if text_columns else columns[0]
+            value_column = numeric_columns[0] if numeric_columns else columns[-1]
+
+        return {
+            "chart_type": chart_type,
+            "title": "Data Analysis",
+            "label_column": label_column,
+            "value_column": value_column,
+            "color_scheme": "professional_blue",
+            "show_legend": chart_type in ['pie', 'doughnut', 'line'],
+            "reasoning": f"Intelligent fallback: {reasoning}"
+        }
+
+    # ========================================
+    # DATA PREPARATION FOR CHARTS
+    # ========================================
 
     def _prepare_chart_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """FIXED: Prepare data with proper time series handling and intelligent date formatting."""
@@ -655,6 +774,69 @@ class ModernVisualizationTool(BaseTool):
             value_col = viz_analysis.get('value_column', columns[1] if len(columns) > 1 else 'Value')
 
             return self._prepare_standard_data(columns, data, viz_analysis, label_col, value_col)
+
+    def _prepare_standard_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any],
+                               label_col: str, value_col: str) -> Dict[str, Any]:
+        """UNIVERSAL: Prepare standard chart data with universal numeric support."""
+
+        chart_type = viz_analysis.get('chart_type', 'bar')
+
+        try:
+            label_idx = columns.index(label_col)
+            value_idx = columns.index(value_col)
+        except ValueError as e:
+            logger.error(f"Column not found: {e}")
+            return {'labels': [], 'values': [], 'chart_type': chart_type, 'is_time_series': False}
+
+        labels = []
+        values = []
+
+        if self._should_log_debug():
+            logger.info(f"Standard data preparation:")
+            logger.info(f"  Chart type: {chart_type}")
+            logger.info(f"  Columns available: {columns}")
+            logger.info(f"  Label column (categories): {label_col}")
+            logger.info(f"  Value column (numbers): {value_col}")
+            logger.info(f"  Final mapping: Label='{label_col}'[{label_idx}], Value='{value_col}'[{value_idx}]")
+
+        for row_idx, row in enumerate(data):
+            if label_idx < len(row) and value_idx < len(row):
+                raw_label = row[label_idx]
+                raw_value = row[value_idx]
+
+                # Handle label
+                if raw_label is None:
+                    label = f"Item {row_idx + 1}"
+                else:
+                    label = str(raw_label)
+
+                # Handle value with UNIVERSAL numeric conversion
+                value = self._to_float(raw_value)
+
+                labels.append(label)
+                values.append(value)
+
+                # Debug first few mappings
+                if self._should_log_debug() and row_idx < 3:
+                    logger.info(
+                        f"  Row {row_idx}: '{raw_label}' -> '{label}', {raw_value} ({type(raw_value).__name__}) -> {value}")
+
+        # Limit data points for better visualization
+        if len(labels) > 50:
+            labels = labels[:50]
+            values = values[:50]
+
+        if self._should_log_debug():
+            logger.info(f"  Final data - Labels: {labels[:3]}, Values: {values[:3]}")
+
+        return {
+            'labels': labels,
+            'values': values,
+            'x_axis': label_col,
+            'y_axis': value_col,
+            'chart_type': chart_type,
+            'is_time_series': False
+        }
 
     def _prepare_time_series_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any], time_info: Dict[str, Any]) -> Dict[str, Any]:
         """FIXED: Prepare time series data with intelligent date formatting."""
@@ -711,13 +893,8 @@ class ModernVisualizationTool(BaseTool):
 
             # Get the numeric value
             raw_value = row[value_col_index]
-            if isinstance(raw_value, (int, float)):
-                values.append(float(raw_value))
-            else:
-                try:
-                    values.append(float(raw_value) if raw_value is not None else 0)
-                except:
-                    values.append(0)
+            value = self._to_float(raw_value)
+            values.append(value)
 
         if self._should_log_debug():
             logger.info(f"FIXED time series data - Labels: {labels[:3]}, Values: {values[:3]}")
@@ -730,6 +907,10 @@ class ModernVisualizationTool(BaseTool):
             'chart_type': chart_type,
             'is_time_series': True
         }
+
+    # ========================================
+    # TIME VALUE FORMATTING
+    # ========================================
 
     def _format_time_value_intelligently(self, time_value: Any, time_format: str) -> str:
         """FIXED: Intelligently format time values for chart labels."""
@@ -814,239 +995,9 @@ class ModernVisualizationTool(BaseTool):
         else:
             return str(int(num_value))
 
-
-
-    # ===== DATA PREPARATION METHODS =====
-
-    def _prepare_standard_data(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any],
-                               label_col: str, value_col: str) -> Dict[str, Any]:
-        """UNIVERSAL: Prepare standard chart data with universal numeric support."""
-
-        chart_type = viz_analysis.get('chart_type', 'bar')
-
-        try:
-            label_idx = columns.index(label_col)
-            value_idx = columns.index(value_col)
-        except ValueError as e:
-            logger.error(f"Column not found: {e}")
-            return {'labels': [], 'values': [], 'chart_type': chart_type, 'is_time_series': False}
-
-        labels = []
-        values = []
-
-        if self._should_log_debug():
-            logger.info(f"Standard data preparation:")
-            logger.info(f"  Chart type: {chart_type}")
-            logger.info(f"  Columns available: {columns}")
-            logger.info(f"  Label column (categories): {label_col}")
-            logger.info(f"  Value column (numbers): {value_col}")
-            logger.info(f"  Final mapping: Label='{label_col}'[{label_idx}], Value='{value_col}'[{value_idx}]")
-
-        for row_idx, row in enumerate(data):
-            if label_idx < len(row) and value_idx < len(row):
-                raw_label = row[label_idx]
-                raw_value = row[value_idx]
-
-                # Handle label
-                if raw_label is None:
-                    label = f"Item {row_idx + 1}"
-                else:
-                    label = str(raw_label)
-
-                # Handle value with UNIVERSAL numeric conversion
-                value = self._to_float(raw_value)
-
-                labels.append(label)
-                values.append(value)
-
-                # Debug first few mappings
-                if self._should_log_debug() and row_idx < 3:
-                    logger.info(
-                        f"  Row {row_idx}: '{raw_label}' -> '{label}', {raw_value} ({type(raw_value).__name__}) -> {value}")
-
-        # Limit data points for better visualization
-        if len(labels) > 50:
-            labels = labels[:50]
-            values = values[:50]
-
-        if self._should_log_debug():
-            logger.info(f"  Final data - Labels: {labels[:3]}, Values: {values[:3]}")
-
-        return {
-            'labels': labels,
-            'values': values,
-            'x_axis': label_col,
-            'y_axis': value_col,
-            'chart_type': chart_type,
-            'is_time_series': False
-        }
-
-    def _analyze_question_context(self, user_question: str) -> Dict[str, Any]:
-        """Analyze question for visualization hints."""
-
-        question_lower = user_question.lower()
-
-        context = {
-            'asks_for_distribution': any(word in question_lower for word in ['distribution', 'breakdown', 'percentage', 'proportion', 'share']),
-            'asks_for_ranking': any(word in question_lower for word in ['top', 'bottom', 'ranking', 'highest', 'lowest', 'best', 'worst']),
-            'asks_for_trend': any(word in question_lower for word in ['trend', 'over time', 'timeline', 'progression', 'evolution', 'évolution', 'journalière']),
-            'asks_for_comparison': any(word in question_lower for word in ['compare', 'comparison', 'versus', 'vs', 'between']),
-            'asks_for_correlation': any(word in question_lower for word in ['correlation', 'relationship', 'related', 'depends on']),
-            'mentions_time': any(word in question_lower for word in ['time', 'date', 'month', 'year', 'day', 'hour', 'period', 'journalière', 'daily']),
-            'has_specific_count': any(word in question_lower for word in ['top 5', 'top 10', 'first 20', 'last 15'])
-        }
-
-        return context
-
-    def _validate_and_enhance_chart_analysis(self, parsed: Dict[str, Any], columns: List[str], data: List[List], user_question: str) -> Dict[str, Any]:
-        """Validate and enhance the LLM's chart analysis."""
-
-        chart_type = parsed.get('chart_type', 'bar')
-
-        # Validate chart type
-        valid_types = ['bar', 'horizontal_bar', 'line', 'area', 'pie', 'doughnut', 'scatter', 'bubble', 'radar', 'polar']
-        if chart_type not in valid_types:
-            chart_type = 'bar'
-            parsed['chart_type'] = chart_type
-
-        # Validate column assignments
-        label_col = parsed.get('label_column', '')
-        value_col = parsed.get('value_column', '')
-
-        # Ensure columns exist
-        if label_col not in columns:
-            # Find first text column or use first column
-            text_cols = [col for col in columns if self._column_is_text(col, columns, data)]
-            parsed['label_column'] = text_cols[0] if text_cols else columns[0]
-
-        if value_col not in columns:
-            # Find first numeric column or use last column
-            numeric_cols = [col for col in columns if self._column_is_numeric(col, columns, data)]
-            parsed['value_column'] = numeric_cols[0] if numeric_cols else columns[-1]
-
-        # Add intelligent defaults based on chart type
-        if chart_type in ['pie', 'doughnut']:
-            parsed['show_legend'] = True
-            parsed['chart_specific_options'] = parsed.get('chart_specific_options', {})
-            parsed['chart_specific_options']['show_data_labels'] = True
-
-        elif chart_type in ['line', 'area']:
-            parsed['chart_specific_options'] = parsed.get('chart_specific_options', {})
-            parsed['chart_specific_options']['enable_zoom'] = True
-
-        elif chart_type in ['scatter', 'bubble']:
-            parsed['chart_specific_options'] = parsed.get('chart_specific_options', {})
-            parsed['chart_specific_options']['show_correlation'] = True
-
-        # Ensure we have a reasoning
-        if not parsed.get('reasoning'):
-            parsed['reasoning'] = f"Selected {chart_type} chart based on data structure and question context"
-
-        return parsed
-
-    def _create_intelligent_fallback_analysis(self, columns: List[str], data: List[List], user_question: str) -> Dict[str, Any]:
-        """Create intelligent fallback when LLM fails."""
-
-        # Analyze data characteristics
-        column_types = self._analyze_column_types(columns, data)
-        question_context = self._analyze_question_context(user_question)
-
-        # Find appropriate columns
-        text_columns = [col for col, type_ in column_types.items() if type_ == 'text']
-        numeric_columns = [col for col, type_ in column_types.items() if type_ == 'numeric']
-        datetime_columns = [col for col, type_ in column_types.items() if type_ == 'datetime']
-
-        # Intelligent chart type selection
-        chart_type = 'bar'  # default
-        reasoning = "Default bar chart"
-
-        # Check for specific patterns
-        if question_context['asks_for_distribution'] and len(text_columns) == 1 and len(data) <= 8:
-            chart_type = 'pie'
-            reasoning = "Pie chart for distribution with ≤8 categories"
-
-        elif question_context['asks_for_ranking'] or 'top' in user_question.lower():
-            chart_type = 'horizontal_bar'
-            reasoning = "Horizontal bar chart for ranking/top N analysis"
-
-        elif question_context['asks_for_trend'] or datetime_columns:
-            chart_type = 'line'
-            reasoning = "Line chart for trend analysis or time series data"
-
-        elif len(numeric_columns) >= 2:
-            chart_type = 'scatter'
-            reasoning = "Scatter plot for correlation between multiple numeric variables"
-
-        elif len(data) > 15:
-            chart_type = 'horizontal_bar'
-            reasoning = "Horizontal bar chart for large number of categories"
-
-        elif len(text_columns) == 1 and len(numeric_columns) == 1 and len(data) <= 8:
-            chart_type = 'doughnut'
-            reasoning = "Doughnut chart for clean categorical distribution"
-
-        # Column assignments
-        label_column = text_columns[0] if text_columns else columns[0]
-        value_column = numeric_columns[0] if numeric_columns else columns[-1]
-
-        return {
-            "chart_type": chart_type,
-            "title": "Data Analysis",
-            "label_column": label_column,
-            "value_column": value_column,
-            "color_scheme": "professional_blue",
-            "show_legend": chart_type in ['pie', 'doughnut', 'line'],
-            "chart_specific_options": {
-                "show_data_labels": chart_type in ['pie', 'doughnut'],
-                "enable_zoom": chart_type in ['line', 'area', 'scatter']
-            },
-            "reasoning": f"Intelligent fallback: {reasoning}"
-        }
-
-    def _column_is_text(self, column_name: str, columns: List[str], data: List[List]) -> bool:
-        """Check if a column contains primarily text data."""
-        try:
-            col_index = columns.index(column_name)
-        except ValueError:
-            return False
-
-        sample_values = [row[col_index] for row in data[:5] if col_index < len(row) and row[col_index] is not None]
-        return sample_values and all(isinstance(val, str) for val in sample_values)
-
-
-    def _might_be_date(self, value: str) -> bool:
-        """Check if a string value might be a date."""
-        if not isinstance(value, str):
-            return False
-
-        # Simple date pattern detection
-        date_patterns = [
-            r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
-            r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
-            r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
-            r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
-            r'\d{4}-\d{2}',        # YYYY-MM (month format)
-        ]
-
-        return any(re.search(pattern, value) for pattern in date_patterns)
-
-    def _analyze_column_types(self, columns: List[str], data: List[List]) -> Dict[str, str]:
-        """Analyze what type of data each column contains (PostgreSQL compatible)."""
-        column_types = {}
-
-        for i, col in enumerate(columns):
-            sample_values = [row[i] for row in data[:5] if i < len(row) and row[i] is not None]
-
-            if not sample_values:
-                column_types[col] = 'empty'
-            elif all(self._is_numeric_value(val) for val in sample_values):  # FIXED: Use helper function
-                column_types[col] = 'numeric'
-            elif all(isinstance(val, str) for val in sample_values):
-                column_types[col] = 'text'
-            else:
-                column_types[col] = 'mixed'
-
-        return column_types
+    # ========================================
+    # HTML VISUALIZATION GENERATION
+    # ========================================
 
     def _create_professional_visualization(self, columns: List[str], data: List[List], viz_analysis: Dict[str, Any], user_question: str) -> str:
         """Create the professional HTML visualization file with safe UTF-8 handling."""
@@ -1355,6 +1306,10 @@ class ModernVisualizationTool(BaseTool):
 
         return html_template
 
+    # ========================================
+    # CHART.JS CONFIGURATION GENERATION
+    # ========================================
+
     def _generate_professional_chart_config(self, chart_data: Dict[str, Any], viz_analysis: Dict[str, Any], colors: List[str]) -> str:
         """Generate Chart.js configuration supporting ALL chart types."""
 
@@ -1376,7 +1331,7 @@ class ModernVisualizationTool(BaseTool):
         config = {
             'type': self._get_chartjs_type(chart_type),
             'data': self._build_chart_data_config(chart_data, viz_analysis, selected_colors),
-            'options': self._build_chart_options(chart_type, chart_data, viz_analysis, chart_options)
+            'options': self._build_chart_options_config(chart_type, chart_data, viz_analysis, chart_options)
         }
 
         # Convert to JSON and inject JavaScript functions
@@ -1386,93 +1341,6 @@ class ModernVisualizationTool(BaseTool):
         config_json = self._inject_callback_functions(config_json, chart_type)
 
         return config_json
-
-    def _build_chart_options(self, chart_type: str, chart_data: Dict[str, Any], viz_analysis: Dict[str, Any], chart_options: Dict[str, Any]) -> Dict[str, Any]:
-        """Build comprehensive options for all chart types."""
-
-        base_options = {
-            'responsive': True,
-            'maintainAspectRatio': False,
-            'plugins': {
-                'legend': {
-                    'display': viz_analysis.get('show_legend', False),
-                    'position': 'top',
-                    'labels': {
-                        'usePointStyle': True,
-                        'padding': 20,
-                        'font': {
-                            'size': 14
-                        }
-                    }
-                },
-                'tooltip': self._build_tooltip_config(chart_type)
-            },
-            'animation': {
-                'duration': 2000,
-                'easing': 'easeInOutQuart'
-            }
-        }
-
-        # Chart-type specific options
-        if chart_type in ['pie', 'doughnut']:
-            base_options['plugins']['legend']['display'] = True
-            base_options['plugins']['legend']['position'] = 'right'
-
-            if chart_options.get('show_data_labels', False):
-                base_options['plugins']['datalabels'] = {
-                    'display': True,
-                    'color': '#ffffff',
-                    'font': {'weight': 'bold'}
-                }
-
-        elif chart_type in ['bar', 'horizontal_bar']:
-            base_options['interaction'] = {
-                'intersect': True,
-                'mode': 'nearest'
-            }
-            base_options['scales'] = self._build_scales_config(chart_type, chart_data)
-
-            if chart_type == 'horizontal_bar':
-                base_options['indexAxis'] = 'y'
-
-        elif chart_type in ['line', 'area']:
-            base_options['interaction'] = {
-                'intersect': False,
-                'mode': 'index'
-            }
-            base_options['scales'] = self._build_scales_config(chart_type, chart_data)
-
-            if chart_options.get('enable_zoom', False):
-                base_options['plugins']['zoom'] = {
-                    'pan': {'enabled': True, 'mode': 'x'},
-                    'zoom': {'wheel': {'enabled': True}, 'mode': 'x'}
-                }
-
-        elif chart_type == 'scatter':
-            base_options['scales'] = {
-                'x': {
-                    'type': 'linear',
-                    'position': 'bottom',
-                    'title': {'display': True, 'text': chart_data.get('x_axis', 'Category')}
-                },
-                'y': {
-                    'title': {'display': True, 'text': chart_data.get('y_axis', 'Value')}
-                }
-            }
-
-        elif chart_type == 'radar':
-            base_options['scales'] = {
-                'r': {
-                    'beginAtZero': True,
-                    'grid': {'color': '#f1f5f9'},
-                    'pointLabels': {
-                        'font': {'size': 11, 'family': 'Inter'},
-                        'color': '#718096'
-                    }
-                }
-            }
-
-        return base_options
 
     def _get_chartjs_type(self, chart_type: str) -> str:
         """Map our chart types to Chart.js types."""
@@ -1551,8 +1419,9 @@ class ModernVisualizationTool(BaseTool):
                 'datasets': [dataset_config]
             }
 
-    def _build_chart_options_config(self, chart_type: str, chart_data: Dict[str, Any], viz_analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Build chart options configuration."""
+    def _build_chart_options_config(self, chart_type: str, chart_data: Dict[str, Any], viz_analysis: Dict[str, Any], chart_options: Dict[str, Any]) -> Dict[str, Any]:
+        """Build comprehensive chart options configuration."""
+
         base_options = {
             'responsive': True,
             'maintainAspectRatio': False,
@@ -1571,19 +1440,7 @@ class ModernVisualizationTool(BaseTool):
                         'color': '#718096'
                     }
                 },
-                'tooltip': {
-                    'enabled': True,
-                    'backgroundColor': '#ffffff',
-                    'titleColor': '#2d3748',
-                    'bodyColor': '#4a5568',
-                    'borderColor': '#e2e8f0',
-                    'borderWidth': 1,
-                    'cornerRadius': 6,
-                    'displayColors': True,
-                    'titleFont': {'size': 13, 'family': 'Inter', 'weight': '500'},
-                    'bodyFont': {'size': 12, 'family': 'Inter', 'weight': '400'},
-                    'padding': 12
-                }
+                'tooltip': self._build_tooltip_config(chart_type)
             },
             'animation': {
                 'duration': 800,
@@ -1591,187 +1448,141 @@ class ModernVisualizationTool(BaseTool):
             }
         }
 
-        # Add scales for charts that need them
-        if chart_type in ['bar', 'horizontal_bar', 'line', 'area']:
+        # Chart-type specific options
+        if chart_type in ['pie', 'doughnut']:
+            base_options['plugins']['legend']['display'] = True
+            base_options['plugins']['legend']['position'] = 'right'
+
+            if chart_options.get('show_data_labels', False):
+                base_options['plugins']['datalabels'] = {
+                    'display': True,
+                    'color': '#ffffff',
+                    'font': {'weight': 'bold'}
+                }
+
+        elif chart_type in ['bar', 'horizontal_bar']:
+            base_options['interaction'] = {
+                'intersect': True,
+                'mode': 'nearest'
+            }
+            base_options['scales'] = self._build_scales_config(chart_type, chart_data)
+
             if chart_type == 'horizontal_bar':
                 base_options['indexAxis'] = 'y'
-                base_options['scales'] = {
-                    'x': {
-                        'beginAtZero': True,
-                        'grid': {'color': '#f1f5f9', 'lineWidth': 1},
-                        'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}},
-                        'title': {
-                            'display': True,
-                            'text': chart_data.get('y_axis', 'Value'),
-                            'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                            'color': '#4a5568'
-                        }
-                    },
-                    'y': {
-                        'grid': {'color': '#f8fafc', 'lineWidth': 1},
-                        'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}, 'maxRotation': 0},
-                        'title': {
-                            'display': True,
-                            'text': chart_data.get('x_axis', 'Category'),
-                            'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                            'color': '#4a5568'
-                        }
+
+        elif chart_type in ['line', 'area']:
+            base_options['interaction'] = {
+                'intersect': False,
+                'mode': 'index'
+            }
+            base_options['scales'] = self._build_scales_config(chart_type, chart_data)
+
+            if chart_options.get('enable_zoom', False):
+                base_options['plugins']['zoom'] = {
+                    'pan': {'enabled': True, 'mode': 'x'},
+                    'zoom': {'wheel': {'enabled': True}, 'mode': 'x'}
+                }
+
+        elif chart_type == 'scatter':
+            base_options['scales'] = {
+                'x': {
+                    'type': 'linear',
+                    'position': 'bottom',
+                    'title': {'display': True, 'text': chart_data.get('x_axis', 'Category')}
+                },
+                'y': {
+                    'title': {'display': True, 'text': chart_data.get('y_axis', 'Value')}
+                }
+            }
+
+        elif chart_type == 'radar':
+            base_options['scales'] = {
+                'r': {
+                    'beginAtZero': True,
+                    'grid': {'color': '#f1f5f9'},
+                    'pointLabels': {
+                        'font': {'size': 11, 'family': 'Inter'},
+                        'color': '#718096'
                     }
                 }
-            else:
-                base_options['scales'] = {
-                    'x': {
-                        'grid': {'color': '#f8fafc', 'lineWidth': 1},
-                        'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}, 'maxRotation': 45},
-                        'title': {
-                            'display': True,
-                            'text': chart_data.get('x_axis', 'Category'),
-                            'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                            'color': '#4a5568'
-                        }
-                    },
-                    'y': {
-                        'beginAtZero': True,
-                        'grid': {'color': '#f1f5f9', 'lineWidth': 1},
-                        'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}},
-                        'title': {
-                            'display': True,
-                            'text': chart_data.get('y_axis', 'Value'),
-                            'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                            'color': '#4a5568'
-                        }
-                    }
-                }
+            }
 
         return base_options
 
-    def _get_file_stats(self, file_path: str) -> Dict[str, Any]:
-        """Get file statistics."""
-        try:
-            stat = os.stat(file_path)
-            return {
-                'size_bytes': stat.st_size,
-                'size_human': self._format_file_size(stat.st_size),
-                'created': datetime.fromtimestamp(stat.st_ctime).isoformat(),
-                'absolute_path': os.path.abspath(file_path),
-                'filename': os.path.basename(file_path)
+    def _build_tooltip_config(self, chart_type: str) -> Dict[str, Any]:
+        """Build tooltip configuration for different chart types."""
+
+        base_tooltip = {
+            'enabled': True,
+            'backgroundColor': '#ffffff',
+            'titleColor': '#2d3748',
+            'bodyColor': '#4a5568',
+            'borderColor': '#e2e8f0',
+            'borderWidth': 1,
+            'cornerRadius': 6,
+            'displayColors': True,
+            'titleFont': {'size': 13, 'family': 'Inter', 'weight': '500'},
+            'bodyFont': {'size': 12, 'family': 'Inter', 'weight': '400'},
+            'padding': 12,
+            'callbacks': {
+                'label': f'PLACEHOLDER_{chart_type.upper()}_CALLBACK' if chart_type in ['pie', 'doughnut', 'scatter', 'bubble'] else 'PLACEHOLDER_DEFAULT_CALLBACK'
             }
-        except Exception as e:
-            logger.error(f"Failed to get file stats: {e}")
-            return {
-                'filename': os.path.basename(file_path) if file_path else 'unknown',
-                'error': str(e)
-            }
-
-    def _format_file_size(self, size_bytes: int) -> str:
-        """Format file size in human readable format."""
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.1f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.1f} TB"
-
-    def _format_professional_cell_value(self, value: Any) -> str:
-        """Enhanced cell value formatting that preserves years correctly."""
-        if value is None:
-            return "—"
-        elif isinstance(value, (int, float)):
-            # Special handling for years (4-digit numbers between 1900-2100)
-            if isinstance(value, (int, float)) and 1900 <= value <= 2100:
-                return str(int(value))  # Keep years as full numbers
-            elif isinstance(value, float) and value.is_integer():
-                return self._format_number_smart(int(value))
-            elif isinstance(value, float):
-                return self._format_number_smart(value)
-            else:
-                return self._format_number_smart(value)
-        elif isinstance(value, datetime):
-            return value.strftime("%Y-%m-%d %H:%M")
-        else:
-            return str(value)
-
-    def _format_number_smart(self, value: float) -> str:
-        """Smart number formatting that preserves years and formats large numbers."""
-        # Don't format years
-        if isinstance(value, (int, float)) and 1900 <= value <= 2100:
-            return str(int(value))
-
-        # Format large numbers with K/M suffixes
-        if abs(value) >= 1_000_000:
-            return f"{value/1_000_000:.2f}M"
-        elif abs(value) >= 1_000:
-            return f"{value/1_000:.2f}K"
-        else:
-            return f"{value:.2f}" if isinstance(value, float) else str(value)
-
-    def _create_time_series_aware_fallback(self, columns: List[str], data: List[List], user_question: str, time_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Create intelligent fallback with time series awareness."""
-
-        # If it's time series data, force line chart
-        if time_info['is_time_series']:
-            chart_type = 'line'
-            reasoning = "Time series data detected - using line chart"
-
-            # Determine columns
-            if time_info.get('datetime_column'):
-                label_column = time_info['datetime_column']['name']
-            elif time_info.get('date_column'):
-                label_column = time_info['date_column']['name']
-            else:
-                label_column = columns[0]
-
-            if time_info.get('value_column'):
-                value_column = time_info['value_column']['name']
-            else:
-                # Find first numeric column that's not a time column
-                value_column = None
-                time_columns = [
-                    time_info.get('datetime_column', {}).get('name'),
-                    time_info.get('date_column', {}).get('name')
-                ]
-
-                for col in columns:
-                    if col not in time_columns and self._column_is_numeric(col, columns, data):
-                        value_column = col
-                        break
-
-                if not value_column:
-                    value_column = columns[-1] if columns else 'Value'
-
-        else:
-            # Use standard fallback logic
-            column_types = self._analyze_column_types(columns, data)
-            question_context = self._analyze_question_context(user_question)
-
-            text_columns = [col for col, type_ in column_types.items() if type_ == 'text']
-            numeric_columns = [col for col, type_ in column_types.items() if type_ == 'numeric']
-
-            # Chart type selection
-            if question_context['asks_for_ranking'] or 'top' in user_question.lower():
-                chart_type = 'horizontal_bar'
-                reasoning = "Horizontal bar chart for ranking analysis"
-            elif question_context['asks_for_distribution'] and len(text_columns) == 1 and len(data) <= 8:
-                chart_type = 'pie'
-                reasoning = "Pie chart for small distribution"
-            elif len(data) > 15:
-                chart_type = 'horizontal_bar'
-                reasoning = "Horizontal bar chart for many categories"
-            else:
-                chart_type = 'bar'
-                reasoning = "Default bar chart"
-
-            label_column = text_columns[0] if text_columns else columns[0]
-            value_column = numeric_columns[0] if numeric_columns else columns[-1]
-
-        return {
-            "chart_type": chart_type,
-            "title": "Data Analysis",
-            "label_column": label_column,
-            "value_column": value_column,
-            "color_scheme": "professional_blue",
-            "show_legend": chart_type in ['pie', 'doughnut', 'line'],
-            "reasoning": f"Intelligent fallback: {reasoning}"
         }
+
+        return base_tooltip
+
+    def _build_scales_config(self, chart_type: str, chart_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Build scales configuration for charts that need them."""
+
+        if chart_type == 'horizontal_bar':
+            return {
+                'x': {
+                    'beginAtZero': True,
+                    'grid': {'color': '#f1f5f9', 'lineWidth': 1},
+                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}},
+                    'title': {
+                        'display': True,
+                        'text': chart_data.get('y_axis', 'Value'),
+                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
+                        'color': '#4a5568'
+                    }
+                },
+                'y': {
+                    'grid': {'color': '#f8fafc', 'lineWidth': 1},
+                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}, 'maxRotation': 0},
+                    'title': {
+                        'display': True,
+                        'text': chart_data.get('x_axis', 'Category'),
+                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
+                        'color': '#4a5568'
+                    }
+                }
+            }
+        else:
+            # For bar, line, area charts
+            return {
+                'x': {
+                    'grid': {'color': '#f8fafc', 'lineWidth': 1},
+                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}, 'maxRotation': 45},
+                    'title': {
+                        'display': True,
+                        'text': chart_data.get('x_axis', 'Category'),
+                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
+                        'color': '#4a5568'
+                    }
+                },
+                'y': {
+                    'beginAtZero': True,
+                    'grid': {'color': '#f1f5f9', 'lineWidth': 1},
+                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}},
+                    'title': {
+                        'display': True,
+                        'text': chart_data.get('y_axis', 'Value'),
+                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
+                        'color': '#4a5568'
+                    }
+                }
+            }
 
     def _inject_callback_functions(self, config_json: str, chart_type: str) -> str:
         """Inject JavaScript callback functions into the JSON configuration."""
@@ -1868,80 +1679,54 @@ class ModernVisualizationTool(BaseTool):
 
         return config_json
 
-    def _build_tooltip_config(self, chart_type: str) -> Dict[str, Any]:
-        """Build tooltip configuration for different chart types."""
+    # ========================================
+    # UTILITY & FILE MANAGEMENT
+    # ========================================
 
-        base_tooltip = {
-            'enabled': True,
-            'backgroundColor': '#ffffff',
-            'titleColor': '#2d3748',
-            'bodyColor': '#4a5568',
-            'borderColor': '#e2e8f0',
-            'borderWidth': 1,
-            'cornerRadius': 6,
-            'displayColors': True,
-            'titleFont': {'size': 13, 'family': 'Inter', 'weight': '500'},
-            'bodyFont': {'size': 12, 'family': 'Inter', 'weight': '400'},
-            'padding': 12,
-            'callbacks': {
-                'label': f'PLACEHOLDER_{chart_type.upper()}_CALLBACK' if chart_type in ['pie', 'doughnut', 'scatter', 'bubble'] else 'PLACEHOLDER_DEFAULT_CALLBACK'
-            }
-        }
-
-        return base_tooltip
-
-    def _build_scales_config(self, chart_type: str, chart_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Build scales configuration for charts that need them."""
-
-        if chart_type == 'horizontal_bar':
+    def _get_file_stats(self, file_path: str) -> Dict[str, Any]:
+        """Get file statistics."""
+        try:
+            stat = os.stat(file_path)
             return {
-                'x': {
-                    'beginAtZero': True,
-                    'grid': {'color': '#f1f5f9', 'lineWidth': 1},
-                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}},
-                    'title': {
-                        'display': True,
-                        'text': chart_data.get('y_axis', 'Value'),
-                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                        'color': '#4a5568'
-                    }
-                },
-                'y': {
-                    'grid': {'color': '#f8fafc', 'lineWidth': 1},
-                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}, 'maxRotation': 0},
-                    'title': {
-                        'display': True,
-                        'text': chart_data.get('x_axis', 'Category'),
-                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                        'color': '#4a5568'
-                    }
-                }
+                'size_bytes': stat.st_size,
+                'size_human': self._format_file_size(stat.st_size),
+                'created': datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                'absolute_path': os.path.abspath(file_path),
+                'filename': os.path.basename(file_path)
             }
-        else:
-            # For bar, line, area charts
+        except Exception as e:
+            logger.error(f"Failed to get file stats: {e}")
             return {
-                'x': {
-                    'grid': {'color': '#f8fafc', 'lineWidth': 1},
-                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}, 'maxRotation': 45},
-                    'title': {
-                        'display': True,
-                        'text': chart_data.get('x_axis', 'Category'),
-                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                        'color': '#4a5568'
-                    }
-                },
-                'y': {
-                    'beginAtZero': True,
-                    'grid': {'color': '#f1f5f9', 'lineWidth': 1},
-                    'ticks': {'color': '#718096', 'font': {'size': 11, 'family': 'Inter'}},
-                    'title': {
-                        'display': True,
-                        'text': chart_data.get('y_axis', 'Value'),
-                        'font': {'size': 12, 'family': 'Inter', 'weight': '500'},
-                        'color': '#4a5568'
-                    }
-                }
+                'filename': os.path.basename(file_path) if file_path else 'unknown',
+                'error': str(e)
             }
+
+    def _format_file_size(self, size_bytes: int) -> str:
+        """Format file size in human readable format."""
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size_bytes < 1024.0:
+                return f"{size_bytes:.1f} {unit}"
+            size_bytes /= 1024.0
+        return f"{size_bytes:.1f} TB"
+
+    # ========================================
+    # DEBUG & LOGGING UTILITIES
+    # ========================================
+
+    def _debug_data_types(self, data: List[List], max_rows: int = 3) -> None:
+        """Debug helper to show data types - helps diagnose issues."""
+        if not self._should_log_debug():
+            return
+
+        logger.info("=== DATA TYPE DEBUGGING ===")
+        for i, row in enumerate(data[:max_rows]):
+            logger.info(f"Row {i}:")
+            for j, value in enumerate(row):
+                type_name = type(value).__name__
+                is_numeric = self._is_numeric_value(value)
+                converted = self._to_float(value) if is_numeric else 'N/A'
+                logger.info(f"  Col {j}: {value} (type: {type_name}, numeric: {is_numeric}, converted: {converted})")
+        logger.info("=== END DEBUGGING ===")
 
     def _should_log_debug(self) -> bool:
         """Check if debug logging should be enabled."""
