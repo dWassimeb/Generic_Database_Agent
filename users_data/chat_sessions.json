@@ -4,18 +4,18 @@
     "messages": [
       {
         "role": "user",
-        "content": "une pie chart de la répartition des cannaux des demandes au deuxième semestre 2024",
+        "content": "une pie chart de la r\u00e9partition des cannaux des demandes au deuxi\u00e8me semestre 2024",
         "timestamp": "2025-07-18T15:00:55.391970",
         "attachments": {}
       },
       {
         "role": "agent",
-        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 4 records across 2 columns\n\n• **canal:** 4 unique values\n\n• **percentage:** 4 unique values\n\n• **Range:** From numerique to visio\n\n**⚡ Executed Query:**\n\n```sql\nSELECT canal, COUNT(*) * 100.0 / (SELECT COUNT(*)\nFROM demandes\nWHERE date(date_demande) BETWEEN '2024-07-01' AND '2024-12-31') AS percentage\nFROM demandes\nWHERE date(date_demande) BETWEEN '2024-07-01' AND '2024-12-31'\nGROUP BY canal\nLIMIT 100\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*⏱️ Processed in 5.50 seconds*",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 4 records across 2 columns\n\n\u2022 **canal:** 4 unique values\n\n\u2022 **percentage:** 4 unique values\n\n\u2022 **Range:** From numerique to visio\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT canal, COUNT(*) * 100.0 / (SELECT COUNT(*)\nFROM demandes\nWHERE date(date_demande) BETWEEN '2024-07-01' AND '2024-12-31') AS percentage\nFROM demandes\nWHERE date(date_demande) BETWEEN '2024-07-01' AND '2024-12-31'\nGROUP BY canal\nLIMIT 100\n```\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*\u23f1\ufe0f Processed in 5.50 seconds*",
         "timestamp": "2025-07-18T15:01:00.958632",
         "attachments": {
           "csv": {
-            "filename": "query_une_pie_chart_de_la_répartitio_20250718_150100.csv",
-            "path": "exports/query_une_pie_chart_de_la_répartitio_20250718_150100.csv",
+            "filename": "query_une_pie_chart_de_la_r\u00e9partitio_20250718_150100.csv",
+            "path": "exports/query_une_pie_chart_de_la_r\u00e9partitio_20250718_150100.csv",
             "size": "0.1 KB"
           },
           "table_data": {
@@ -45,7 +45,7 @@
         }
       }
     ],
-    "timestamp": "2025-07-18T15:01:00.958930",
+    "timestamp": "2025-07-22T16:39:36.903280",
     "user": "wassime"
   },
   "62b69a22-be72-463b-97b0-4c0b5ee58aa0": {
@@ -53,13 +53,13 @@
     "messages": [
       {
         "role": "user",
-        "content": "Combien de maisons France Services y a-t-il par région ?",
+        "content": "Combien de maisons France Services y a-t-il par r\u00e9gion ?",
         "timestamp": "2025-07-18T15:16:36.012378",
         "attachments": {}
       },
       {
         "role": "agent",
-        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 12 records across 2 columns\n\n• **region:** 12 unique values\n\n• **nb_maisons:** Range 17 - 34, Avg 25\n\n• **Range:** From Auvergne-Rhône-Alpes to Hauts-de-France\n\n**⚡ Executed Query:**\n\n```sql\nSELECT region, COUNT(*) as nb_maisons\nFROM maisons_france_services\nGROUP BY region\nORDER BY nb_maisons DESC\nLIMIT 100\n```\n\n**📈 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*⏱️ Processed in 5.39 seconds*",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 12 records across 2 columns\n\n\u2022 **region:** 12 unique values\n\n\u2022 **nb_maisons:** Range 17 - 34, Avg 25\n\n\u2022 **Range:** From Auvergne-Rh\u00f4ne-Alpes to Hauts-de-France\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT region, COUNT(*) as nb_maisons\nFROM maisons_france_services\nGROUP BY region\nORDER BY nb_maisons DESC\nLIMIT 100\n```\n\n**\ud83d\udcc8 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*\u23f1\ufe0f Processed in 5.39 seconds*",
         "timestamp": "2025-07-18T15:16:41.482064",
         "attachments": {
           "csv": {
@@ -79,11 +79,11 @@
             ],
             "data": [
               [
-                "Auvergne-Rhône-Alpes",
+                "Auvergne-Rh\u00f4ne-Alpes",
                 34
               ],
               [
-                "Île-de-France",
+                "\u00cele-de-France",
                 30
               ],
               [
@@ -91,7 +91,7 @@
                 30
               ],
               [
-                "Provence-Alpes-Côte d'Azur",
+                "Provence-Alpes-C\u00f4te d'Azur",
                 27
               ],
               [
@@ -132,13 +132,13 @@
       },
       {
         "role": "user",
-        "content": "Évolution du nombre de demandes par mois cette année",
+        "content": "\u00c9volution du nombre de demandes par mois cette ann\u00e9e",
         "timestamp": "2025-07-18T15:17:09.352396",
         "attachments": {}
       },
       {
         "role": "agent",
-        "content": "❌ **Error:** Database query error occurred\n\n💡 **Suggestion:** Please try rephrasing your question or contact support\n\n*⏱️ Processed in 4.17 seconds*",
+        "content": "\u274c **Error:** Database query error occurred\n\n\ud83d\udca1 **Suggestion:** Please try rephrasing your question or contact support\n\n*\u23f1\ufe0f Processed in 4.17 seconds*",
         "timestamp": "2025-07-18T15:17:13.590073",
         "attachments": {
           "csv": {
@@ -158,11 +158,11 @@
             ],
             "data": [
               [
-                "Auvergne-Rhône-Alpes",
+                "Auvergne-Rh\u00f4ne-Alpes",
                 34
               ],
               [
-                "Île-de-France",
+                "\u00cele-de-France",
                 30
               ],
               [
@@ -170,7 +170,7 @@
                 30
               ],
               [
-                "Provence-Alpes-Côte d'Azur",
+                "Provence-Alpes-C\u00f4te d'Azur",
                 27
               ],
               [
@@ -214,17 +214,17 @@
     "user": "wassime"
   },
   "bf50b94b-1ef0-4492-8bc6-73948718417d": {
-    "title": "Évolution Nombre",
+    "title": "\u00c9volution Nombre",
     "messages": [
       {
         "role": "user",
-        "content": "Évolution du nombre de demandes par mois cette année",
+        "content": "\u00c9volution du nombre de demandes par mois cette ann\u00e9e",
         "timestamp": "2025-07-18T15:22:11.870056",
         "attachments": {}
       },
       {
         "role": "agent",
-        "content": "❌ **Error:** No SQL query to execute\n\n*⏱️ Processed in 6.85 seconds*",
+        "content": "\u274c **Error:** No SQL query to execute\n\n*\u23f1\ufe0f Processed in 6.85 seconds*",
         "timestamp": "2025-07-18T15:22:18.793629",
         "attachments": {
           "csv": {
@@ -239,11 +239,11 @@
             ],
             "data": [
               [
-                "Auvergne-Rhône-Alpes",
+                "Auvergne-Rh\u00f4ne-Alpes",
                 34
               ],
               [
-                "Île-de-France",
+                "\u00cele-de-France",
                 30
               ],
               [
@@ -251,7 +251,7 @@
                 30
               ],
               [
-                "Provence-Alpes-Côte d'Azur",
+                "Provence-Alpes-C\u00f4te d'Azur",
                 27
               ],
               [
@@ -292,18 +292,18 @@
       },
       {
         "role": "user",
-        "content": "Évolution du nombre de demandes par mois cette année",
+        "content": "\u00c9volution du nombre de demandes par mois cette ann\u00e9e",
         "timestamp": "2025-07-18T15:23:22.781868",
         "attachments": {}
       },
       {
         "role": "agent",
-        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 7 records across 2 columns\n\n• **mois:** 7 unique values\n\n• **nombre_de_demandes:** Range 748 - 1.3K, Avg 1.2K\n\n• **Range:** From 2025-01 to 2025-07\n\n**⚡ Executed Query:**\n\n```sql\nSELECT TO_CHAR(DATE_TRUNC('month', date_demande), 'YYYY-MM') AS mois, COUNT(*) AS nombre_de_demandes\nFROM demandes\nWHERE EXTRACT(YEAR\nFROM date_demande) = EXTRACT(YEAR\nFROM CURRENT_DATE)\nGROUP BY DATE_TRUNC('month', date_demande)\nORDER BY mois\nLIMIT 12\n```\n\n**📈 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*⏱️ Processed in 6.01 seconds*",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 7 records across 2 columns\n\n\u2022 **mois:** 7 unique values\n\n\u2022 **nombre_de_demandes:** Range 748 - 1.3K, Avg 1.2K\n\n\u2022 **Range:** From 2025-01 to 2025-07\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT TO_CHAR(DATE_TRUNC('month', date_demande), 'YYYY-MM') AS mois, COUNT(*) AS nombre_de_demandes\nFROM demandes\nWHERE EXTRACT(YEAR\nFROM date_demande) = EXTRACT(YEAR\nFROM CURRENT_DATE)\nGROUP BY DATE_TRUNC('month', date_demande)\nORDER BY mois\nLIMIT 12\n```\n\n**\ud83d\udcc8 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]\n\n*\u23f1\ufe0f Processed in 6.01 seconds*",
         "timestamp": "2025-07-18T15:23:28.866350",
         "attachments": {
           "csv": {
-            "filename": "query_évolution_du_nombre_de_demande_20250718_152327.csv",
-            "path": "exports/query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "filename": "query_\u00e9volution_du_nombre_de_demande_20250718_152327.csv",
+            "path": "exports/query_\u00e9volution_du_nombre_de_demande_20250718_152327.csv",
             "size": "0.1 KB"
           },
           "chart": {
@@ -357,12 +357,12 @@
       },
       {
         "role": "agent",
-        "content": "❌ **Error:** No SQL query to execute\n\n*⏱️ Processed in 7.28 seconds*",
+        "content": "\u274c **Error:** No SQL query to execute\n\n*\u23f1\ufe0f Processed in 7.28 seconds*",
         "timestamp": "2025-07-18T15:24:13.102403",
         "attachments": {
           "csv": {
-            "filename": "query_évolution_du_nombre_de_demande_20250718_152327.csv",
-            "path": "exports/query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "filename": "query_\u00e9volution_du_nombre_de_demande_20250718_152327.csv",
+            "path": "exports/query_\u00e9volution_du_nombre_de_demande_20250718_152327.csv",
             "size": "0.1 KB"
           },
           "chart": {
@@ -423,12 +423,12 @@
       },
       {
         "role": "agent",
-        "content": "❌ **Error:** SQL syntax error in the generated query\n\n💡 **Suggestion:** Please rephrase your question or try a simpler request",
+        "content": "\u274c **Error:** SQL syntax error in the generated query\n\n\ud83d\udca1 **Suggestion:** Please rephrase your question or try a simpler request",
         "timestamp": "2025-07-18T15:29:42.185499",
         "attachments": {
           "csv": {
-            "filename": "query_évolution_du_nombre_de_demande_20250718_152327.csv",
-            "path": "exports/query_évolution_du_nombre_de_demande_20250718_152327.csv",
+            "filename": "query_\u00e9volution_du_nombre_de_demande_20250718_152327.csv",
+            "path": "exports/query_\u00e9volution_du_nombre_de_demande_20250718_152327.csv",
             "size": "0.1 KB"
           },
           "table_data": {
@@ -477,7 +477,7 @@
       },
       {
         "role": "agent",
-        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 9 records across 2 columns\n\n• **type_service:** 9 unique values\n\n• **avg_processing_time:** 9 unique values\n\n• **Range:** From energie to famille\n\n**⚡ Executed Query:**\n\n```sql\nSELECT d.type_service, AVG(d.duree_traitement) AS avg_processing_time\nFROM demandes d\nJOIN conseillers c ON d.conseiller_id = c.id\nWHERE d.date_demande >= NOW() - INTERVAL '30 days'\nGROUP BY d.type_service\nORDER BY avg_processing_time DESC\nLIMIT 10\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 9 records across 2 columns\n\n\u2022 **type_service:** 9 unique values\n\n\u2022 **avg_processing_time:** 9 unique values\n\n\u2022 **Range:** From energie to famille\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT d.type_service, AVG(d.duree_traitement) AS avg_processing_time\nFROM demandes d\nJOIN conseillers c ON d.conseiller_id = c.id\nWHERE d.date_demande >= NOW() - INTERVAL '30 days'\nGROUP BY d.type_service\nORDER BY avg_processing_time DESC\nLIMIT 10\n```\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
         "timestamp": "2025-07-18T15:30:16.592255",
         "attachments": {
           "csv": {
@@ -539,7 +539,7 @@
       },
       {
         "role": "agent",
-        "content": "❌ **Error:** SQL syntax error in the generated query\n\n💡 **Suggestion:** Please rephrase your question or try a simpler request",
+        "content": "\u274c **Error:** SQL syntax error in the generated query\n\n\ud83d\udca1 **Suggestion:** Please rephrase your question or try a simpler request",
         "timestamp": "2025-07-18T15:30:41.418768",
         "attachments": {
           "csv": {
@@ -598,7 +598,7 @@
     "user": "wassime"
   },
   "450035d3-e343-417a-9291-8afb6e2aa92b": {
-    "title": "Chart Request",
+    "title": "Temps Traitement Moyen",
     "messages": [
       {
         "role": "user",
@@ -608,7 +608,7 @@
       },
       {
         "role": "agent",
-        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 9 records across 2 columns\n\n• **type_service:** 9 unique values\n\n• **avg_processing_time:** 9 unique values\n\n• **Range:** From famille to social\n\n**⚡ Executed Query:**\n\n```sql\nSELECT type_service, AVG(duree_traitement) AS avg_processing_time\nFROM demandes\nWHERE date_demande >= NOW() - INTERVAL '30 days'\nGROUP BY type_service\nORDER BY avg_processing_time\nLIMIT 10\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 9 records across 2 columns\n\n\u2022 **type_service:** 9 unique values\n\n\u2022 **avg_processing_time:** 9 unique values\n\n\u2022 **Range:** From famille to social\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT type_service, AVG(duree_traitement) AS avg_processing_time\nFROM demandes\nWHERE date_demande >= NOW() - INTERVAL '30 days'\nGROUP BY type_service\nORDER BY avg_processing_time\nLIMIT 10\n```\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
         "timestamp": "2025-07-18T15:34:28.866445",
         "attachments": {
           "csv": {
@@ -670,7 +670,7 @@
       },
       {
         "role": "agent",
-        "content": "**📊 Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**🔍 Key Insights:**\n\n• **Dataset Size:** 12 records across 2 columns\n\n• **month:** 12 unique values\n\n• **average_satisfaction:** 12 unique values\n\n• **Range:** From 2024-07 to 2025-06\n\n**⚡ Executed Query:**\n\n```sql\nSELECT TO_CHAR(DATE_TRUNC('month', d.date_demande), 'YYYY-MM') AS month, AVG(d.satisfaction_score) AS average_satisfaction\nFROM demandes d\nJOIN statistiques_mensuelles sm ON d.maison_fs_id = sm.maison_fs_id\nGROUP BY TO_CHAR(DATE_TRUNC('month', d.date_demande), 'YYYY-MM')\nORDER BY month\nLIMIT 12\n```\n\n**📁 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 12 records across 2 columns\n\n\u2022 **month:** 12 unique values\n\n\u2022 **average_satisfaction:** 12 unique values\n\n\u2022 **Range:** From 2024-07 to 2025-06\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT TO_CHAR(DATE_TRUNC('month', d.date_demande), 'YYYY-MM') AS month, AVG(d.satisfaction_score) AS average_satisfaction\nFROM demandes d\nJOIN statistiques_mensuelles sm ON d.maison_fs_id = sm.maison_fs_id\nGROUP BY TO_CHAR(DATE_TRUNC('month', d.date_demande), 'YYYY-MM')\nORDER BY month\nLIMIT 12\n```\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
         "timestamp": "2025-07-18T15:34:59.661107",
         "attachments": {
           "csv": {
@@ -737,7 +737,155 @@
         }
       }
     ],
-    "timestamp": "2025-07-18T15:34:59.661233",
+    "timestamp": "2025-07-22T16:39:41.447534",
+    "user": "wassime"
+  },
+  "e0a2d6ce-49ff-4204-b1f9-4d5970980e95": {
+    "title": "Temps Traitement Moyen",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Temps de traitement moyen par type de service en pie chart",
+        "timestamp": "2025-07-22T16:39:44.752991",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 9 records across 2 columns\n\n\u2022 **type_service:** 9 unique values\n\n\u2022 **avg_processing_time:** 9 unique values\n\n\u2022 **Range:** From retraite to logement\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT type_service, AVG(duree_traitement) AS avg_processing_time\nFROM demandes\nWHERE date_demande >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'\nGROUP BY type_service\nORDER BY avg_processing_time\nLIMIT 10\n```\n\n**\ud83d\udcc8 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "timestamp": "2025-07-22T16:39:52.892278",
+        "attachments": {
+          "csv": {
+            "filename": "query_temps_de_traitement_moyen_par__20250722_163951.csv",
+            "path": "exports/query_temps_de_traitement_moyen_par__20250722_163951.csv",
+            "size": "0.3 KB"
+          },
+          "chart": {
+            "filename": "chart_20250722_163952.html",
+            "path": "visualizations/chart_20250722_163952.html",
+            "size": "9.8 KB"
+          },
+          "table_data": {
+            "columns": [
+              "type_service",
+              "avg_processing_time"
+            ],
+            "data": [
+              [
+                "retraite",
+                64.06640625
+              ],
+              [
+                "famille",
+                64.08045977011494
+              ],
+              [
+                "services_postaux",
+                64.5125
+              ],
+              [
+                "energie",
+                66.14592274678111
+              ],
+              [
+                "acces_droit",
+                66.78423236514523
+              ],
+              [
+                "sante",
+                68.33771929824562
+              ],
+              [
+                "social",
+                68.4567901234568
+              ],
+              [
+                "emploi",
+                69.17786561264822
+              ],
+              [
+                "logement",
+                72.12626262626263
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "timestamp": "2025-07-23T16:13:37.208491",
+    "user": "wassime"
+  },
+  "43fb7546-50ee-4a44-b4ce-bad1eb3fd973": {
+    "title": "Temps Traitement Moyen",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Temps de traitement moyen par type de service en pie chart",
+        "timestamp": "2025-07-23T16:13:39.416370",
+        "attachments": {}
+      },
+      {
+        "role": "agent",
+        "content": "**\ud83d\udcca Data Results:**\n\n[TABLE_DATA_PLACEHOLDER]\n\n**\ud83d\udd0d Key Insights:**\n\n\u2022 **Dataset Size:** 9 records across 2 columns\n\n\u2022 **type_service:** 9 unique values\n\n\u2022 **avg_treatment_time:** 9 unique values\n\n\u2022 **Range:** From acces_droit to famille\n\n**\u26a1 Executed Query:**\n\n```sql\nSELECT type_service, AVG(duree_traitement) AS avg_treatment_time\nFROM demandes\nGROUP BY type_service\nLIMIT 10\n```\n\n**\ud83d\udcc8 Chart Generated:**\n\n[CHART_DISPLAY_PLACEHOLDER]\n\n**\ud83d\udcc1 Downloads:**\n\n[DOWNLOAD_BUTTONS_PLACEHOLDER]",
+        "timestamp": "2025-07-23T16:13:47.387173",
+        "attachments": {
+          "csv": {
+            "filename": "query_temps_de_traitement_moyen_par__20250723_161345.csv",
+            "path": "exports/query_temps_de_traitement_moyen_par__20250723_161345.csv",
+            "size": "0.3 KB"
+          },
+          "chart": {
+            "filename": "chart_20250723_161347.html",
+            "path": "visualizations/chart_20250723_161347.html",
+            "size": "9.8 KB"
+          },
+          "table_data": {
+            "columns": [
+              "type_service",
+              "avg_treatment_time"
+            ],
+            "data": [
+              [
+                "acces_droit",
+                66.4413875598086
+              ],
+              [
+                "social",
+                68.48199279711885
+              ],
+              [
+                "sante",
+                67.24715549936789
+              ],
+              [
+                "services_postaux",
+                67.21111111111111
+              ],
+              [
+                "emploi",
+                66.38935406698565
+              ],
+              [
+                "energie",
+                67.03834631515878
+              ],
+              [
+                "logement",
+                67.60643564356435
+              ],
+              [
+                "retraite",
+                66.74054373522458
+              ],
+              [
+                "famille",
+                66.84704583103257
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "timestamp": "2025-07-23T16:14:06.646721",
     "user": "wassime"
   }
 }

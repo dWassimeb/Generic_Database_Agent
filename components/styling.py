@@ -1,12 +1,13 @@
 """
-CSS Styling for Telmi - OPTIMIZED AND FIXED VERSION
-Cleaner, focused styling with proper form alignment and reduced complexity
+CSS Styling for Telmi - SURGICAL FIX ONLY
+Only fixes the specific issues without touching working elements
+Based on your existing GitHub repository design
 """
 
 import streamlit as st
 
 def apply_custom_styling():
-    """Apply optimized CSS styling with fixed form alignment and reduced complexity."""
+    """Apply SURGICAL fixes while preserving all existing working design."""
 
     st.markdown("""
     <style>
@@ -50,6 +51,136 @@ def apply_custom_styling():
     header {visibility: hidden;}
     .stDeployButton {display: none;}
     .stActionButton {display: none;}
+
+    /* ===============================================
+       SURGICAL FIX 1: REMOVE ALL OVERLAPPING BORDERS COMPLETELY
+       =============================================== */
+    
+    /* RESET: Remove ALL borders and styling from container divs to eliminate double borders */
+    .stTextInput > div,
+    .stTextInput > div > div,
+    .stTextInput > label,
+    .stTextInput [data-testid="stTextInput-RootElement"] {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        outline: none !important;
+    }
+
+    /* ===============================================
+       SURGICAL FIX 2: PERFECT HEIGHT MATCHING & CENTERING
+       =============================================== */
+    
+    /* UNIVERSAL: All inputs get EXACT button height and perfect centering */
+    .stTextInput > div > div > input {
+        border: 2px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        background: #ffffff !important;
+        color: var(--text-primary) !important;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+        font-family: 'Inter', sans-serif !important;
+        
+        /* MATCH BUTTON HEIGHT EXACTLY - Reduced from 46px to 42px */
+        height: 42px !important;
+        line-height: 42px !important;  /* Perfect vertical centering */
+        padding: 0 16px !important;    /* Only horizontal padding for perfect centering */
+        
+        /* LAYOUT FIXES */
+        box-sizing: border-box !important;
+        width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
+        vertical-align: middle !important;
+        transition: all 0.2s ease !important;
+        outline: none !important;
+    }
+
+    /* Perfect focus state - no height change */
+    .stTextInput > div > div > input:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1) !important;
+        outline: none !important;
+        /* Height stays exactly the same */
+        height: 42px !important;
+        line-height: 42px !important;
+    }
+
+    /* Ensure input container matches exactly */
+    .stTextInput > div {
+        min-height: 42px !important;
+        height: 42px !important;
+        overflow: visible !important;
+        position: relative !important;
+    }
+
+    /* ===============================================
+       SURGICAL FIX 3: COMPLETELY FIX PASSWORD FIELD OVERLAP
+       =============================================== */
+
+    /* COMPLETELY HIDE the overlapping "Please fill form" message */
+    .stTextInput > div > div > div[data-testid="InputInstructions"],
+    .stTextInput div[data-testid="InputInstructions"],
+    .stTextInput [data-testid="InputInstructions"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+    }
+
+    /* Position show/hide button properly and make it visible */
+    .stTextInput > div > div > button[kind="tertiary"] {
+        position: absolute !important;
+        right: 12px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 20 !important;
+        background: transparent !important;
+        border: none !important;
+        color: #718096 !important;
+        font-size: 12px !important;
+        padding: 4px 6px !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        height: auto !important;
+        min-height: auto !important;
+        width: auto !important;
+        margin: 0 !important;
+    }
+
+    /* Show/hide button hover state */
+    .stTextInput > div > div > button[kind="tertiary"]:hover {
+        background: #f7fafc !important;
+        color: #4a5568 !important;
+    }
+
+    /* Add proper padding for password fields to make space for button */
+    .stTextInput > div > div > input[type="password"] {
+        padding-right: 50px !important;  /* More space for button */
+    }
+
+    /* Keep auth forms clean - hide show/hide buttons for login/register */
+    .login-container .stTextInput button[kind="tertiary"],
+    .stForm .stTextInput button[kind="tertiary"] {
+        display: none !important;
+    }
+
+    /* Also hide instructions for auth forms */
+    .login-container .stTextInput > div > div > div[data-testid="InputInstructions"],
+    .stForm .stTextInput > div > div > div[data-testid="InputInstructions"],
+    .login-container .stTextInput div[data-testid="InputInstructions"],
+    .stForm .stTextInput div[data-testid="InputInstructions"] {
+        display: none !important;
+    }
+
+    /* ===============================================
+       PRESERVE ALL EXISTING WORKING STYLES
+       =============================================== */
 
     /* === ENHANCED AUTHENTICATION STYLING === */
 
@@ -128,59 +259,123 @@ def apply_custom_styling():
         font-weight: 400;
     }
 
-    /* === FIXED FORM STYLING === */
+    /* ===============================================
+       SURGICAL FIX 4: AUTH FORMS - MATCH ACTUAL BUTTON HEIGHT
+       =============================================== */
 
-    /* FIXED: Authentication form inputs with perfect alignment - NO OVERLAPPING */
+    /* Auth form inputs - EXACT same height as actual auth buttons */
     .login-container .stTextInput > div > div > input,
     .stForm .stTextInput > div > div > input {
         border: 2px solid #e2e8f0 !important;
         border-radius: 10px !important;
-        padding: 14px 16px !important;
         background: #ffffff !important;
         color: #2d3748 !important;
         font-size: 15px !important;
         font-weight: 400 !important;
         font-family: 'Inter', sans-serif !important;
-        height: 50px !important;
-        line-height: 1.2 !important;
+        
+        /* MATCH ACTUAL AUTH BUTTON HEIGHT - Reduced to match visual button size */
+        height: 44px !important;
+        line-height: 44px !important;  /* Perfect centering */
+        padding: 0 16px !important;    /* Only horizontal padding */
+        
+        /* LAYOUT */
         box-sizing: border-box !important;
         width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
+        vertical-align: middle !important;
         transition: all 0.2s ease !important;
-        position: relative !important;
         outline: none !important;
     }
 
-    /* FIXED: Remove any potential overlapping containers */
-    .login-container .stTextInput > div > div,
-    .stForm .stTextInput > div > div {
-        position: relative !important;
-        border: none !important;
-        background: transparent !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* FIXED: Focus state without overlapping */
+    /* Auth form focus - maintain exact height */
     .login-container .stTextInput > div > div > input:focus,
     .stForm .stTextInput > div > div > input:focus {
         border-color: #4299e1 !important;
-        outline: none !important;
         box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1) !important;
-        z-index: 1 !important;
+        outline: none !important;
+        /* Keep exact same height as button */
+        height: 44px !important;
+        line-height: 44px !important;
     }
 
-    /* FIXED: Authentication form buttons with perfect alignment and white text */
+    /* Auth form containers */
+    .login-container .stTextInput > div,
+    .stForm .stTextInput > div {
+        min-height: 44px !important;
+        height: 44px !important;
+        overflow: visible !important;
+        position: relative !important;
+    }
+
+    /* ===============================================
+       SURGICAL FIX 5: CHAT FORM - MATCH ACTUAL BUTTON HEIGHT  
+       =============================================== */
+
+    /* Chat inputs - EXACT same height as actual send button */
+    .main .stTextInput > div > div > input:not(.login-container .stTextInput > div > div > input):not(.stForm .stTextInput > div > div > input) {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        background: #ffffff !important;
+        color: #2d3748 !important;
+        font-size: 15px !important;
+        
+        /* MATCH ACTUAL SEND BUTTON HEIGHT - Reduced to match visual button size */
+        height: 38px !important;
+        line-height: 38px !important;  /* Perfect centering */
+        padding: 0 16px !important;    /* Only horizontal padding */
+        
+        /* LAYOUT */
+        box-sizing: border-box !important;
+        width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
+        vertical-align: middle !important;
+        transition: all 0.2s ease !important;
+    }
+
+    /* Chat input focus - maintain exact height */
+    .main .stTextInput > div > div > input:not(.login-container .stTextInput > div > div > input):not(.stForm .stTextInput > div > div > input):focus {
+        border-color: #4299e1 !important;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1) !important;
+        outline: none !important;
+        /* Keep exact same height as send button */
+        height: 38px !important;
+        line-height: 38px !important;
+    }
+
+    /* Chat form containers */
+    .main .stTextInput > div:not(.login-container .stTextInput > div):not(.stForm .stTextInput > div) {
+        min-height: 38px !important;
+        height: 38px !important;
+        overflow: visible !important;
+        position: relative !important;
+    }
+
+    /* ===============================================
+       SURGICAL FIX 6: BUTTONS MATCH VISUAL SIZE EXACTLY
+       =============================================== */
+
+    /* Auth buttons - MATCH the visual size you see (44px) */
     .login-container .stButton > button,
     .stForm .stButton > button {
         background: linear-gradient(135deg, #4299e1, #3182ce) !important;
         color: white !important;
         border: none !important;
         border-radius: 10px !important;
-        padding: 0 !important;
         font-weight: 600 !important;
         font-size: 15px !important;
-        height: 50px !important;
+        
+        /* EXACT HEIGHT MATCH WITH AUTH INPUTS - Visual button size */
+        height: 44px !important;
+        min-height: 44px !important;
+        line-height: 44px !important;
+        padding: 0 24px !important;
+        
+        /* LAYOUT */
         width: 100% !important;
+        box-sizing: border-box !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -188,17 +383,58 @@ def apply_custom_styling():
         transition: all 0.2s ease !important;
         box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3) !important;
         cursor: pointer !important;
+        margin: 0 !important;
     }
 
+    /* Auth button hover - maintain height */
     .login-container .stButton > button:hover,
     .stForm .stButton > button:hover {
         background: linear-gradient(135deg, #3182ce, #2c5aa0) !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4) !important;
         color: white !important;
+        /* Keep exact same height */
+        height: 44px !important;
+        line-height: 44px !important;
     }
 
-    /* FIXED: Ensure button text is white and properly centered */
+    /* Chat send button - MATCH the visual size you see (38px) */
+    .main form[data-testid="stForm"]:not(.login-container form):not(.stForm form) .stButton > button {
+        background: #4299e1 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        
+        /* EXACT HEIGHT MATCH WITH CHAT INPUTS - Visual button size */
+        height: 38px !important;
+        min-height: 38px !important;
+        line-height: 38px !important;
+        padding: 0 20px !important;
+        
+        /* LAYOUT */
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Chat button hover - maintain height */
+    .main form[data-testid="stForm"]:not(.login-container form):not(.stForm form) .stButton > button:hover {
+        background: #3182ce !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3) !important;
+        /* Keep exact same height */
+        height: 38px !important;
+        line-height: 38px !important;
+    }
+
+    /* Ensure button text is white and properly centered */
     .login-container .stButton > button p,
     .stForm .stButton > button p,
     .login-container .stButton > button span,
@@ -212,42 +448,15 @@ def apply_custom_styling():
         line-height: 1 !important;
     }
 
-    /* FIXED: Remove conflicting placeholder text for auth forms */
+    /* Remove conflicting placeholder text for auth forms */
     .login-container .stTextInput > div > div > div[data-testid="InputInstructions"],
     .stForm .stTextInput > div > div > div[data-testid="InputInstructions"] {
         display: none !important;
     }
 
-    /* FIXED: Hide show/hide password button for auth forms to prevent overlap */
-    .login-container .stTextInput button[kind="tertiary"],
-    .stForm .stTextInput button[kind="tertiary"] {
-        display: none !important;
-    }
 
-    /* === CHAT INPUT STYLING (Different from auth forms) === */
 
-    /* Chat input - keep it separate from auth forms */
-    .main .stTextInput > div > div > input:not(.login-container .stTextInput > div > div > input):not(.stForm .stTextInput > div > div > input) {
-        border: 2px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        padding: 12px 16px !important;
-        background: #ffffff !important;
-        color: #2d3748 !important;
-        font-size: 15px !important;
-        height: 46px !important;
-        line-height: 1.4 !important;
-        box-sizing: border-box !important;
-        width: 100% !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .main .stTextInput > div > div > input:not(.login-container .stTextInput > div > div > input):not(.stForm .stTextInput > div > div > input):focus {
-        border-color: #4299e1 !important;
-        outline: none !important;
-        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1) !important;
-    }
-
-    /* FIXED: Chat form layout - perfect alignment */
+    /* PRESERVE: Chat form layout - perfect alignment */
     .main form[data-testid="stForm"]:not(.login-container form):not(.stForm form) {
         display: flex !important;
         flex-direction: row !important;
@@ -269,30 +478,13 @@ def apply_custom_styling():
         margin: 0 !important;
     }
 
-    /* FIXED: Chat send button - matches input height exactly */
-    .main form[data-testid="stForm"]:not(.login-container form):not(.stForm form) .stButton > button {
-        background: #4299e1 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        height: 46px !important;
-        min-height: 46px !important;
-        padding: 0 20px !important;
-        margin: 0 !important;
-        white-space: nowrap !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2) !important;
-    }
 
-    .main form[data-testid="stForm"]:not(.login-container form):not(.stForm form) .stButton > button:hover {
-        background: #3182ce !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3) !important;
-    }
 
-    /* === CHAT INTERFACE === */
+    /* ===============================================
+       PRESERVE ALL EXISTING CHAT INTERFACE STYLES
+       =============================================== */
+
+    /* === PRESERVE CHAT INTERFACE === */
 
     /* Chat header */
     .chat-header {
@@ -320,7 +512,7 @@ def apply_custom_styling():
         font-size: 1rem;
     }
 
-    /* Message containers */
+    /* PRESERVE: Message containers EXACTLY as they are */
     .message-container {
         display: flex;
         margin: 1rem 0;
@@ -401,7 +593,7 @@ def apply_custom_styling():
         margin-top: 0.5rem;
     }
 
-    /* Welcome message */
+    /* PRESERVE: Welcome message */
     .welcome-message {
         text-align: center;
         padding: 2rem;
@@ -436,7 +628,7 @@ def apply_custom_styling():
         line-height: 1.5;
     }
 
-    /* === SIDEBAR STYLING === */
+    /* === PRESERVE SIDEBAR STYLING === */
 
     .sidebar-header {
         text-align: center;
@@ -486,10 +678,11 @@ def apply_custom_styling():
         border-top: none !important;
         border-radius: 0 0 8px 8px !important;
         background: #ffffff !important;
+        padding: 16px !important;
         margin-bottom: 8px !important;
     }
 
-    /* === REGULAR BUTTONS (Non-form) === */
+    /* === PRESERVE BUTTONS STYLING === */
 
     .stButton > button:not(.login-container .stButton > button):not(.stForm .stButton > button) {
         background: var(--primary-color) !important;
@@ -508,7 +701,7 @@ def apply_custom_styling():
         transform: translateY(-1px) !important;
     }
 
-    /* === SUCCESS/ERROR MESSAGES === */
+    /* === PRESERVE SUCCESS/ERROR MESSAGES === */
 
     .stSuccess {
         background: #f0fdf4 !important;
@@ -550,7 +743,7 @@ def apply_custom_styling():
         font-weight: 500 !important;
     }
 
-    /* === DOWNLOAD BUTTONS === */
+    /* === PRESERVE DOWNLOAD BUTTONS === */
 
     .stDownloadButton > button {
         background: var(--success-color) !important;
@@ -571,7 +764,7 @@ def apply_custom_styling():
         box-shadow: var(--shadow-md) !important;
     }
 
-    /* === RESPONSIVE DESIGN === */
+    /* === PRESERVE RESPONSIVE DESIGN === */
 
     @media (max-width: 768px) {
         .login-container .stTextInput > div > div > input,
@@ -620,7 +813,7 @@ def apply_custom_styling():
         }
     }
 
-    /* === ANIMATIONS === */
+    /* === PRESERVE ANIMATIONS === */
 
     @keyframes slideUp {
         from {
@@ -633,7 +826,7 @@ def apply_custom_styling():
         }
     }
 
-    /* === SCROLLBAR === */
+    /* === PRESERVE SCROLLBAR === */
 
     ::-webkit-scrollbar {
         width: 8px;
@@ -652,7 +845,7 @@ def apply_custom_styling():
         background: var(--text-muted);
     }
 
-    /* === LAYOUT FIXES === */
+    /* === PRESERVE LAYOUT FIXES === */
 
     .block-container {
         padding-top: 0;
