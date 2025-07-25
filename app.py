@@ -1,6 +1,9 @@
 """
 Telmi - Modern ClickHouse Analytics Chat Interface
-FIXED VERSION - Proper thinking indicator + improved chat history + better sidebar
+UPDATED VERSION - With Avatar Button & Account Settings Toggle
+- Sidebar can be collapsed but not reopened
+- Avatar button toggles between chat and account settings
+- Preserved all original functionality and design
 """
 
 import streamlit as st
@@ -52,7 +55,7 @@ st.set_page_config(
 )
 
 class TelmiApp:
-    """Main Telmi application class with FIXED thinking indicator and improved chat history."""
+    """Main Telmi application class with avatar button and account settings toggle."""
 
     def __init__(self):
         self.auth_manager = AuthManager()
@@ -73,7 +76,8 @@ class TelmiApp:
             'processing_message': False,  # FIXED: Single processing flag
             'show_thinking': False,       # FIXED: Separate flag for thinking indicator
             'typing_response': "",
-            'show_account_settings': False,
+            'show_account_settings': False,  # NEW: Toggle between chat and account settings
+            'show_delete_confirmation': False,  # NEW: Delete confirmation state
             'agent_status_checked': False,
             'sessions_loaded': False,
             'agent_status': {
@@ -81,7 +85,8 @@ class TelmiApp:
                 'database_connected': False,
                 'ready': False,
                 'message': 'System not tested yet'
-            }
+            },
+            'registration_success': False
         }
 
         for key, default_value in default_states.items():
@@ -93,7 +98,7 @@ class TelmiApp:
         # Apply custom styling
         apply_custom_styling()
 
-        # FIXED: Add thinking indicator CSS
+        # FIXED: Add thinking indicator CSS and sidebar hide CSS
         self._add_thinking_indicator_css()
 
         # Check if integration is available
@@ -108,9 +113,10 @@ class TelmiApp:
             self._show_main_interface()
 
     def _add_thinking_indicator_css(self):
-        """FIXED: Add CSS for thinking indicator without causing layout issues."""
+        """Add CSS for thinking indicator."""
         st.markdown("""
         <style>
+        
         .thinking-overlay {
             position: fixed;
             top: 0;
@@ -225,6 +231,14 @@ class TelmiApp:
                 </div>
             """, unsafe_allow_html=True)
 
+            # Clear form if registration was successful
+            clear_form = st.session_state.get('registration_success', False)
+            if clear_form:
+                for key in ['register_username', 'register_email', 'register_password', 'register_confirm_password']:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.session_state.registration_success = False
+
             # Login/Register tabs using streamlit's native tabs
             login_tab, register_tab = st.tabs(["🔑 Sign In", "📝 Create Account"])
 
@@ -266,16 +280,13 @@ class TelmiApp:
                             st.session_state.authenticated = True
                             st.session_state.user_info = self.auth_manager.get_user_info(username)
                             st.success("✅ Login successful!")
-                            # REMOVED THE PROBLEMATIC LINE - Don't try to clear form fields
+                            time.sleep(0.5)
                             st.rerun()
                         else:
-                            st.error("❌ Invalid username or password")
+                            st.error("❌ Invalid credentials. Please check your username and password.")
 
             # REGISTER TAB
             with register_tab:
-                # FIXED: Add a flag to control form clearing
-                clear_form = st.session_state.get('registration_success', False)
-
                 with st.form("register_form", clear_on_submit=clear_form):
                     st.markdown("### Create Your Account")
                     st.markdown("Join Telmi and start analyzing your telecom data")
@@ -364,7 +375,7 @@ class TelmiApp:
             """, unsafe_allow_html=True)
 
     def _show_main_interface(self):
-        """Display the main chat interface."""
+        """Display the main interface - chat or account settings based on toggle."""
         # Load chat sessions from file on first access
         if not st.session_state.sessions_loaded:
             self._load_sessions_from_file()
@@ -397,12 +408,27 @@ class TelmiApp:
         # Sidebar (with improvements)
         self.sidebar_manager.render_sidebar()
 
-        # Main chat interface
-        self._render_main_chat()
+        # Main interface - toggle between chat and account settings
+        if st.session_state.get('show_account_settings', False):
+            self._render_account_settings_interface()
+        else:
+            self._render_main_chat()
 
         # FIXED: Handle message processing without infinite loops
         if st.session_state.processing_message:
             self._process_queued_message()
+
+    def _render_account_settings_interface(self):
+        """Render the account settings interface in the main area."""
+        st.markdown("""
+            <div class="chat-header">
+                <h1>Account Settings</h1>
+                <p>Manage your Telmi account and preferences</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Use the auth manager's render method
+        self.auth_manager.render_account_settings()
 
     def _render_thinking_overlay(self):
         """FIXED: Render thinking overlay that doesn't interfere with layout."""
@@ -745,7 +771,7 @@ class TelmiApp:
                         )
 
     def _render_input_area(self):
-        """Render the input area at the bottom."""
+        """Render the input area at the bottom - ORIGINAL DESIGN."""
         with st.form("chat_input_form", clear_on_submit=True):
             col1, col2 = st.columns([6, 1])
 
@@ -955,7 +981,7 @@ class TelmiApp:
         sessions_file = "users_data/chat_sessions.json"
 
         try:
-            os.makedirs("data", exist_ok=True)
+            os.makedirs("users_data", exist_ok=True)
 
             # Load existing sessions from file
             all_sessions = {}
@@ -1035,8 +1061,16 @@ class TelmiApp:
 
 def main():
     """Main entry point."""
-    app = TelmiApp()
-    app.run()
+    try:
+        app = TelmiApp()
+        app.run()
+    except Exception as e:
+        st.error(f"🚨 **Application Error:** {str(e)}")
+        logger.error(f"Application error: {e}", exc_info=True)
+
+        # Show debug information in development
+        if os.getenv("DEBUG", "false").lower() == "true":
+            st.exception(e)
 
 
 if __name__ == "__main__":

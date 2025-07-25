@@ -1,9 +1,9 @@
 """
-FIXED Sidebar Manager for Telmi - Permanent Delete & Optimized Performance
-- Fixed caching issues causing deleted conversations to reappear
-- Permanent deletion with proper file sync
-- Fast performance with smart caching
-- No UI blocking or success messages
+UPDATED Sidebar Manager for Telmi - Avatar Button Toggles Account Settings
+- Sidebar can be collapsed but not reopened (no toggle button)
+- Avatar button toggles between chat and account settings interface
+- Avatar shows user initials and is the only account settings button
+- Maintains all existing functionality from the original code
 """
 
 import streamlit as st
@@ -15,13 +15,13 @@ from typing import Dict, Any, List
 from components.auth import AuthManager
 
 class SidebarManager:
-    """Manages the sidebar interface with permanent deletion and optimized performance."""
+    """Manages the sidebar interface with avatar button that toggles account settings."""
 
     def __init__(self):
         self.auth_manager = AuthManager()
         self.sessions_file = "users_data/chat_sessions.json"
         self._ensure_data_directory()
-        # FIXED: Cache conversations to avoid repeated file reads
+        # Cache conversations to avoid repeated file reads
         self._conversations_cache = None
         self._cache_timestamp = None
 
@@ -30,7 +30,10 @@ class SidebarManager:
         os.makedirs("users_data", exist_ok=True)
 
     def render_sidebar(self):
-        """Render the complete sidebar interface with optimized performance."""
+        """Render the complete sidebar interface with avatar button."""
+        # Add custom CSS for sidebar behavior and avatar
+        self._add_sidebar_and_avatar_styling()
+
         with st.sidebar:
             # Header
             self._render_sidebar_header()
@@ -38,23 +41,243 @@ class SidebarManager:
             # Section headers styling
             self._add_section_header_styling()
 
-            # Section 1: Chat History (FIXED VERSION)
+            # Section 1: Chat History
             self._render_fast_chat_history_section()
 
             # Section 2: System Status
             self._render_system_status_section()
 
-            # Section 3: Account Settings
-            self._render_account_settings_section()
+            # Section 3: Avatar Button (replaces Account Settings dropdown)
+            self._render_avatar_button()
 
             # Footer with stats
             self._render_sidebar_footer()
+
+    def _add_sidebar_and_avatar_styling(self):
+        """Add CSS for avatar button styling and sidebar toggle visibility."""
+        st.markdown("""
+        <style>
+        /* Ensure sidebar toggle is always visible when collapsed */
+        [data-testid="collapsedControl"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Make sure the sidebar toggle arrow is visible */
+        .css-1rs6os, .css-1d391kg {
+            display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* Avatar button styling */
+        .avatar-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 8px 0;
+            box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2);
+        }
+        
+        .avatar-button:hover {
+            background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3);
+        }
+        
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .avatar-text {
+            flex: 1;
+            text-align: left;
+            line-height: 1.3;
+        }
+        
+        .avatar-username {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .avatar-subtitle {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 1px;
+        }
+        
+        /* Avatar button styling */
+        .avatar-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 8px 0;
+            box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2);
+        }
+        
+        .avatar-button:hover {
+            background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3);
+        }
+        
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .avatar-text {
+            flex: 1;
+            text-align: left;
+            line-height: 1.3;
+        }
+        
+        .avatar-username {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .avatar-subtitle {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 1px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    def _render_avatar_button(self):
+        """Render the stylish avatar button that toggles account settings view."""
+        if st.session_state.user_info:
+            username = st.session_state.user_info['username']
+
+            # Get user initials
+            initials = self._get_user_initials(username)
+
+            # Single stylish button that handles the toggle
+            if st.button(f"{initials} {username}", key="stylish_avatar_toggle", help="Toggle Account Settings", use_container_width=True):
+                # Toggle the main view
+                if st.session_state.get('show_account_settings', False):
+                    st.session_state.show_account_settings = False
+                else:
+                    st.session_state.show_account_settings = True
+                st.rerun()
+
+            # Style the button to look like the beautiful avatar design
+            st.markdown(f"""
+            <style>
+            /* Style the avatar button to look like the original design */
+            div[data-testid="stButton"] button[key="stylish_avatar_toggle"] {{
+                background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%) !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 12px !important;
+                padding: 12px 16px !important;
+                font-family: 'Inter', sans-serif !important;
+                font-weight: 500 !important;
+                font-size: 14px !important;
+                transition: all 0.2s ease !important;
+                margin: 8px 0 !important;
+                box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 60px !important;
+            }}
+            
+            div[data-testid="stButton"] button[key="stylish_avatar_toggle"]:hover {{
+                background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%) !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3) !important;
+            }}
+            
+            /* Style the button text to look like avatar with initials */
+            div[data-testid="stButton"] button[key="stylish_avatar_toggle"] p {{
+                margin: 0 !important;
+                color: white !important;
+                font-weight: 500 !important;
+                font-size: 14px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+            }}
+            
+            /* Create the circular avatar effect with CSS pseudo-element */
+            div[data-testid="stButton"] button[key="stylish_avatar_toggle"] p::before {{
+                content: "{initials}";
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 14px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                margin-right: 0;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
+
+    def _get_user_initials(self, username: str) -> str:
+        """Get user initials for the avatar."""
+        if not username:
+            return "U"
+
+        # Split by spaces, underscores, or dots and take first letter of each part
+        parts = username.replace('_', ' ').replace('.', ' ').split()
+        if len(parts) >= 2:
+            return (parts[0][0] + parts[1][0]).upper()
+        else:
+            return username[:2].upper()
 
     def _add_section_header_styling(self):
         """Add CSS for better section header styling."""
         st.markdown("""
             <style>
-            /* FIXED: Make section headers more prominent */
+            /* Make section headers more prominent */
             .streamlit-expanderHeader {
                 font-weight: 600 !important;
                 font-size: 16px !important;
@@ -78,7 +301,7 @@ class SidebarManager:
                 margin-bottom: 8px !important;
             }
             
-            /* FIXED: Stats container - left aligned */
+            /* Stats container - left aligned */
             .sidebar-stats-improved {
                 background: #f8fafc !important;
                 border: 1px solid #e2e8f0 !important;
@@ -248,6 +471,9 @@ class SidebarManager:
         st.session_state.current_session_id = None
         st.session_state.current_messages = []
 
+        # Switch back to chat interface
+        st.session_state.show_account_settings = False
+
         # FIXED: Force cache refresh when starting new chat
         self._conversations_cache = None
         self._cache_timestamp = None
@@ -266,6 +492,9 @@ class SidebarManager:
             conversation_data = conversations[conversation_id]
             st.session_state.current_session_id = conversation_id
             st.session_state.current_messages = conversation_data.get('messages', [])
+            
+            # Switch back to chat interface
+            st.session_state.show_account_settings = False
             st.rerun()
 
     def _instant_delete_conversation(self, conversation_id: str):
@@ -445,88 +674,36 @@ class SidebarManager:
                 except Exception as e:
                     st.error(f"❌ Status check failed: {e}")
 
-    def _render_account_settings_section(self):
-        """Render the account settings section."""
+    def _render_sidebar_footer(self):
+        """Render the sidebar footer with stats."""
+        st.markdown("---")
+
+        # Simple stats without complex calculations
         if st.session_state.user_info:
-            username = st.session_state.user_info['username']
-            email = st.session_state.user_info.get('email', 'No email set')
+            conversations = self._load_conversations_cached()
+            total_conversations = len(conversations)
 
-            with st.expander("👤 Account Settings", expanded=False):
-                # Display current user info
-                st.markdown("**Current User:**")
-                st.markdown(f"👤 **Username:** {username}")
-                st.markdown(f"📧 **Email:** {email}")
+            # Simple message count
+            total_messages = 0
+            for conv in conversations.values():
+                total_messages += len(conv.get('messages', []))
 
-                st.markdown("---")
+            st.markdown(f"""
+                <div class="sidebar-stats-improved">
+                    <div class="stats-text-improved">
+                        💭 {total_conversations} conversations<br>
+                        💬 {total_messages} messages
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
-                # Change Password Section
-                st.markdown("**🔒 Change Password:**")
+        st.markdown("""
+            <div class="sidebar-footer">
+                <small>🦫Powered by Castor</small>
+            </div>
+        """, unsafe_allow_html=True)
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    old_password = st.text_input(
-                        "Current Password",
-                        type="password",
-                        key="sidebar_old_password"
-                    )
-                with col2:
-                    new_password = st.text_input(
-                        "New Password",
-                        type="password",
-                        key="sidebar_new_password"
-                    )
-
-                if st.button("🔒 Change Password", key="change_password_sidebar", use_container_width=True):
-                    if old_password and new_password:
-                        if self.auth_manager.change_password(username, old_password, new_password):
-                            st.success("✅ Password changed successfully!")
-                            st.session_state.sidebar_old_password = ""
-                            st.session_state.sidebar_new_password = ""
-                            st.rerun()
-                        else:
-                            st.error("❌ Current password is incorrect")
-                    else:
-                        st.error("⚠️ Please fill in both password fields")
-
-                st.markdown("---")
-
-                # Account Actions Section
-                st.markdown("**⚙️ Account Actions:**")
-
-                if st.button("🗑️ Delete Account", key="delete_account_sidebar", use_container_width=True, type="secondary"):
-                    st.session_state.show_delete_confirmation = True
-                    st.rerun()
-
-                if st.button("🚪 Logout", key="logout_sidebar", use_container_width=True):
-                    self._logout()
-
-                # Delete Account Confirmation Dialog
-                if getattr(st.session_state, 'show_delete_confirmation', False):
-                    st.markdown("---")
-                    st.error("⚠️ **DELETE ACCOUNT CONFIRMATION**")
-                    st.markdown("""
-                    **This action is irreversible!**
-                    
-                    The following will be **permanently deleted**:
-                    • Your user account and profile
-                    • All chat history and conversations
-                    • All saved preferences and settings
-                    """)
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("❌ Cancel", key="cancel_delete", use_container_width=True):
-                            st.session_state.show_delete_confirmation = False
-                            st.rerun()
-
-                    with col2:
-                        if st.button("🗑️ Yes, Delete Everything", key="confirm_delete", use_container_width=True, type="primary"):
-                            self._delete_user_account(username)
-
-        else:
-            with st.expander("👤 Account Settings", expanded=False):
-                st.info("⚠️ Please log in to access account settings")
-
+    # ALL ORIGINAL HELPER METHODS PRESERVED
     def _delete_user_account(self, username: str):
         """Delete user account and all associated data."""
         try:
@@ -539,6 +716,7 @@ class SidebarManager:
                 st.session_state.current_messages = []
                 st.session_state.current_session_id = None
                 st.session_state.show_delete_confirmation = False
+                st.session_state.show_account_settings = False
 
                 # Clear cache
                 self._conversations_cache = None
@@ -596,32 +774,3 @@ class SidebarManager:
         self._cache_timestamp = None
 
         st.rerun()
-
-    def _render_sidebar_footer(self):
-        """Render the sidebar footer with stats."""
-        st.markdown("---")
-
-        # Simple stats without complex calculations
-        if st.session_state.user_info:
-            conversations = self._load_conversations_cached()
-            total_conversations = len(conversations)
-
-            # Simple message count
-            total_messages = 0
-            for conv in conversations.values():
-                total_messages += len(conv.get('messages', []))
-
-            st.markdown(f"""
-                <div class="sidebar-stats-improved">
-                    <div class="stats-text-improved">
-                        💭 {total_conversations} conversations<br>
-                        💬 {total_messages} messages
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("""
-            <div class="sidebar-footer">
-                <small>Powered by Castor</small>
-            </div>
-        """, unsafe_allow_html=True)
